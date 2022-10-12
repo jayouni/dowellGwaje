@@ -1,0 +1,1087 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="first.check">
+
+
+ 	<!-- 로그인할때 -->
+    
+    <select id="login" resultType="memberVO" >
+    <![CDATA[
+    	
+ 
+			select A.USER_ID                 	/* MA_USER_MT에 사용자 아이디 */
+    		,A.USER_NM						 	/* MA_USER_MT에 사용자 이름 */
+    		,A.USER_DT_CD                   	/* MA_USER_MT에 사용자 구분 코드  */
+    		,A.USE_PWD						 	/* MA_USER_MT에 사용자 비밀번호  */
+    		,A.PRT_CD						 	/* MA_USER_MT에 거래처 코드  */
+    		,B.PRT_NM						 	/* MA_PRT_MT에 거래처명  */	
+    		from MA_USER_MT A					/* MA_USER_MT을 A로 지명  */	
+            ,MA_PRT_MT B						/* MA_PRT_MT을 B로 지명  */	
+    		WHERE								/* 어디 */
+            A.PRT_CD = B.PRT_CD					/* MA_USER_MT 와 MA_PRT_MT 의 거래처 코드가 같은 곳 */
+            and USER_ID=#{user_id}				/* 그리고 로그인할때 넣은 값과 사용자 아이디 비교*/
+    		and USE_PWD=#{use_pwd}				/* 그리고 로그인할때 넣은 값과 사용자 비밀번호 비교 */
+    			
+    	]]>
+    </select>
+    
+
+
+
+	
+	<!-- 1 페이지 고객 조회용 쿼리 -->
+
+     
+    <resultMap type="HashMap" id="firstMap">
+	   <result property="CUST_NO" 		column="CUST_NO" 		javaType="String" />
+	   <result property="CUST_NM" 		column="CUST_NM" 		javaType="String" />
+	   <result property="MBL_NO" 		column="MBL_NO" 		javaType="String" />
+	   <result property="CUST_SS_CD" 	column="CUST_SS_CD" 	javaType="String" />
+	   <result property="JS_DT" 		column="JS_DT" 			javaType="String" />
+	   <result property="PRT_NM" 		column="PRT_NM" 		javaType="String" />
+	   <result property="USER_NM" 		column="USER_NM" 		javaType="String" />
+	   <result property="LST_UPD_DT" 	column="LST_UPD_DT" 	javaType="String" />
+	</resultMap>
+    
+    <!-- 고객번호 / 고객이름 / 휴대폰 번호 / 고객 상태 / 가입 일자 / 가입 매장 / 등록자 / 수정 일자-->
+    <select id="firstTable" resultMap="firstMap" parameterType="HashMap">
+		SELECT A.CUST_NO AS CUST_NO																/*고객 번호*/
+			 , CASE WHEN LENGTH(A.CUST_NM) = 2 THEN SUBSTR(A.CUST_NM, 1, 1) || '*'          	/* 고객명이 두개일때 첫 번째 자리를 자르고 뒤에 자리는 *을 붙인다*/
+		       ELSE																				/*그 외에는*/
+      		   SUBSTR(A.CUST_NM,1,1) || LPAD('*',LENGTH(A.CUST_NM)-2,'*')	  					/*고객 이름에 맨 앞자리를 자르고 *로 이름에 마지막 전 자리까지 채운다*/
+      		   || SUBSTR(A.CUST_NM,LENGTH(A.CUST_NM),1) END AS CUST_NM							/*이름에 마지막 자리를 잘라 붙여 고객이름을 불러올 떄 쓴다*/
+      		 ,REGEXP_REPLACE(REGEXP_REPLACE(A.MBL_NO, 											/*번호를 3-4 자리로 가져와*/
+      		 '(.{3})(.*)(.{4})', '\1-\2-\3'), '-(.*)-', '-'||LPAD('*',							/* 000-****-0000 - 대시를 붙여준다*/
+        	 LENGTH(REGEXP_REPLACE(A.MBL_NO, '(.{3})(.*)(.{4})', '\2')), '*')||'-') AS MBL_NO
+        	 , D.DTL_CD_NM AS CUST_SS_CD													 	/*고객 상태 코드를 MA_CODE_DT에 있는 코드 이름으로 불러온다*/
+        	 , TO_CHAR(TO_DATE(A.JS_DT), 'YYYY-MM-DD') AS JS_DT                              	/* 가입날짜 YYYY-MM-DD 형식으로 숫자값을 문자열로*/
+		     , B.PRT_NM AS PRT_NM                                                            	/* 가입매장*/
+		     , A.FST_USER_ID || '/' || C.USER_NM AS USER_NM  								 	/*최초등록자와  최종 수정 날짜*/
+		     , TO_CHAR(A.LST_UPD_DT, 'YYYY-MM-DD HH24:MI:SS') AS LST_UPD_DT 
+		            
+		FROM CS_CUST01_MT A INNER JOIN MA_PRT_MT B                             				 	/* CS_CUST01_MT와 이너조인 MA_PRT_MT*/             
+		ON A.JN_PRT_CD = B.PRT_CD                                                  			 	/* CS_CUST01_MT 가입매장 코드와 MA_PRT_MT 거래처 코드가 맞는것*/         
+		INNER JOIN MA_USER_MT C                                                              	/* MA_USER_MT와 CS_CUST01_MT 이너조인 */
+		ON A.FST_USER_ID = C.USER_ID                                                         	/* 최초등록자와 사용자아이디가 같은것 */
+		LEFT OUTER JOIN MA_CODE_DT D
+		ON D.CODE_CD = 'CUST_SS_CD' AND A.CUST_SS_CD = D.DTL_CD								 	/*고객 상태 코드를 가져오려고 조인해온다*/
+		WHERE 1=1																			 	/*  참일때 */
+		AND A.JS_DT BETWEEN TO_DATE(#{jn_from}, 'YYYY-MM-DD') 								 	/*가입 날짜를 선택해 */
+                   AND TO_DATE(#{jn_to}, 'YYYY-MM-DD') 										 	/*그 사이의 값들을 구해온다*/
+		
+		<if test='prt_cd != "" '>                                  							 	/*매장코드 값에 무언가 있다면*/
+			AND A.JN_PRT_CD = #{prt_cd}           											 	/* 가입매장코드와 들어온 값에 값이 있는지 비교*/
+		</if>
+		
+		<if test='cust_no_dis != ""'>                                                        	/*고객코드에 값이 있다면*/
+			AND A.CUST_NO = #{cust_no_dis} 											 		 	/* 고객 번호와 같은 값이 있는지 비교*/
+		</if>
+		
+		<if test='cust_ss_cd != ""'>                                                         	/* 고객 상태코드가 무언가 들어가 있다면*/
+			AND A.CUST_SS_CD = #{cust_ss_cd}                                                 	/* 같은 상태 코드를 찾는다*/
+		</if>
+			ORDER BY CUST_NO																 	/* 고객 번호 순으로 오름차순*/
+    
+     </select> 
+     
+     
+     
+     
+     
+     
+     	
+	
+	
+     <!-- 2pg 상세페이지 -->
+     <select id="getCustInfo" resultType="HashMap" parameterType="HashMap">
+		<!-- 고객정보 조회 해오는 QUERY 구현 -->
+		SELECT CUST.CUST_NO																				/*고객 번호*/
+		     , CUST.CUST_NM																				/*고객 이름*/
+		     , CUST.SEX_CD																				/*고객 성별*/
+		     , CUST.SCAL_YN																				/*양력 음력*/
+		     , SUBSTR(CUST.BRDY_DT, 1, 4) || '-' || SUBSTR(CUST.BRDY_DT, 5, 2) || '-' || SUBSTR(CUST.BRDY_DT, 7, 2) AS BRDY_DT 		/*고객 생일*/
+		     , CASE WHEN CUST.MRRG_DT IS NOT NULL THEN SUBSTR (CUST.MRRG_DT, 1, 4) || '-' || SUBSTR(CUST.MRRG_DT, 5, 2) || '-' || SUBSTR(CUST.MRRG_DT, 7, 2)
+		       ELSE CUST.MRRG_DT 
+		       END AS MRRG_DT																			/*결혼 기념일*/
+		     , CUST.POC_CD																				/*직업 코드*/
+		     , SUBSTR(CUST.MBL_NO, 1, 3) AS MBL_NO1														/*핸드폰 번호 첫번째 자리*/
+		     , CASE WHEN LENGTH(CUST.MBL_NO) = 11 THEN SUBSTR(CUST.MBL_NO, 4, 4) ELSE SUBSTR(CUST.MBL_NO, 4, 3) END AS MBL_NO2	 	/*핸드폰 번호 가운데 자리*/
+		     , SUBSTR(CUST.MBL_NO, -4) AS MBL_NO3														/*핸드폰 번호 마지막 자리*/
+		     , CUST.PSMT_GRC_CD																			/*우편물 수령 코드*/
+		     , SUBSTR(CUST.EMAIL, 1, INSTR(CUST.EMAIL, '@')-1) AS EMAIL									/*이메일 앞 부분 @에서 앞자리까지 자른다*/
+		     , SUBSTR(CUST.EMAIL, INSTR(CUST.EMAIL, '@')+1) AS EMAIL_DTL								/*이메일 뒷 부분 @에서 뒤부터 자른다*/
+		     , CUST.ZIP_CD																				/*우편번호*/
+		     , CUST.ADDR																				/*주소*/
+		     , CUST.ADDR_DTL																			/*상세 주소*/
+		     , CUST.CUST_SS_CD																			/*고객 상태 코드*/
+		     , CUST.CNCL_CNTS																			/*해지 사유*/
+		     , CUST.JN_PRT_CD																			/*가입 매장 코드*/
+		     , (SELECT PRT_NM FROM MA_PRT_MT WHERE PRT_CD = CUST.JN_PRT_CD) AS JN_PRT_NM 				/*가입 매장 이름*/
+		     , CUST.EMAIL_RCV_YN																		/*이메일 수신 동의*/
+		     , CUST.SMS_RCV_YN																			/*sms 수신 동의*/
+		     , CUST.DM_RCV_YN																			/*dm 수신 동의*/
+		     , CASE WHEN CUST.FST_JS_DT IS NOT NULL THEN SUBSTR(CUST.FST_JS_DT, 1, 4) || '-' || SUBSTR(CUST.FST_JS_DT, 5, 2) || '-' || SUBSTR(CUST.FST_JS_DT, 7, 2)
+		            ELSE CUST.FST_JS_DT													
+		       END AS FST_JS_DT																			/*최초 가입 일자*/
+		     , CASE WHEN CUST.JS_DT IS NOT NULL THEN SUBSTR(CUST.JS_DT, 1, 4) || '-' || SUBSTR(CUST.JS_DT, 5, 2) || '-' || SUBSTR(CUST.JS_DT, 7, 2) 
+		            ELSE CUST.JS_DT 
+		       END AS JS_DT																				/*가입 일자*/
+		     , CASE WHEN CUST.STP_DT IS NOT NULL THEN SUBSTR(CUST.STP_DT, 1, 4) || '-' || SUBSTR(CUST.STP_DT, 5, 2) || '-' || SUBSTR(CUST.STP_DT, 7, 2) 
+		            ELSE CUST.STP_DT
+		       END AS STP_DT																			/*중지 일자*/
+		     , CASE WHEN CUST.CNCL_DT IS NOT NULL THEN SUBSTR(CUST.CNCL_DT, 1, 4) || '-' || SUBSTR(CUST.CNCL_DT, 5, 2) || '-' || SUBSTR(CUST.CNCL_DT, 7, 2) 
+		            ELSE CUST.CNCL_DT 													
+		       END AS CNCL_DT																			/*해지 일자*/
+		     , CUST.FST_REG_DT																			/*최초 등록 일자*/			
+		     , CUST.FST_USER_ID																			/*최초 등록자*/
+		     , CUST.LST_UPD_DT																			/*최종 수정일자*/
+		     , CUST.LST_UPD_ID 																			/*최종 수정자*/
+		     , TRIM(TO_CHAR(NVL(SAL.TOT_SAL_AMT,0), '999,999,999,999')) AS TOT_SAL_AMT					/*총 구매 금액*/
+		     , TRIM(TO_CHAR(NVL(SAL.NMM_SAL_AMT,0),'999,999,999,999')) AS NMM_SAL_AMT					/*당월 구매 금액*/
+		     , CASE WHEN SAL.LST_SAL_DT IS NOT NULL THEN SUBSTR(SAL.LST_SAL_DT, 1, 4) || '-' || SUBSTR(SAL.LST_SAL_DT, 5, 2) || '-' || SUBSTR(SAL.LST_SAL_DT, 7, 2) 
+		            ELSE SAL.LST_SAL_DT 
+		       END AS LST_SAL_DT																		/*최종 구매일*/
+		     , TRIM(TO_CHAR(NVL(PNT.TOT_PNT,0), '999,999,999,999')) AS TOT_PNT 							/*총 포인트*/
+		     , TRIM(TO_CHAR(NVL(PNT.RSVG_PNT,0), '999,999,999,999')) AS RSVG_PNT 						/*당월 적립 포인트*/
+		     , TRIM(TO_CHAR(NVL(PNT.US_PNT,0), '999,999,999,999')) AS US_PNT 							/*당월 사용포인트*/
+		 FROM CS_CUST01_MT CUST
+		LEFT OUTER JOIN (
+		                <!-- 총구매금액, 당월구매금액, 최종구매일을 구하는 QUERY -->
+		                SELECT CUST_NO																	/*양수 음수 값을 만들어줌*/
+		                     , SUM(CASE WHEN SAL_TP_CD = 'SAL' THEN TOT_SAL_AMT ELSE TOT_SAL_AMT*-1 END) TOT_SAL_AMT
+		                     , SUM(CASE WHEN SAL_DT LIKE CONCAT(TO_CHAR(SYSDATE, 'YYYYMM'), '%') THEN DECODE(SAL_TP_CD, 'SAL', TOT_SAL_AMT, TOT_SAL_AMT*-1) ELSE 0 END) NMM_SAL_AMT
+		                     , MAX(SAL_DT) LST_SAL_DT													/*당월 구매 금액과 MAX를 이용해 최종 구매일 불러오기*/
+		                 FROM CS_SAL01_MT																/*CS_SAL01_MT 고객 판매 테이블에서*/
+		                WHERE 1=1
+		                GROUP BY CUST_NO																/*고객 번호로 그룹화*/
+		                ) SAL																			/*SAL로 명명*/
+		ON CUST.CUST_NO = SAL.CUST_NO																	/*CS_CUST01_MT 고객 번호와 SAL.CS_SAL01_MT 고객번호가 일치 하는곳*/
+		LEFT OUTER JOIN (
+						<!-- 총포인트, 당월적립포인트, 당월사용포인트 구하는 QUERY -->
+				        SELECT CUST_NO																	/*고객 번호*/
+				             , SUM(NVL(RSVG_PNT, 0)+NVL(HNDC_PNT, 0)) TOT_PNT							/*적립 포인트 + 수기 포인트는 총 포인트*/
+				             , SUM(CASE WHEN ST_DT LIKE CONCAT(TO_CHAR(SYSDATE, 'YYYYMM'), '%') THEN RSVG_PNT ELSE 0 END) RSVG_PNT										/*적립 포인트*/
+				             , SUM(CASE WHEN ST_DT LIKE CONCAT(TO_CHAR(SYSDATE, 'YYYYMM'), '%') THEN ABS(US_PNT) ELSE 0 END) US_PNT										/*사용 포인트*/
+				         FROM (
+				                SELECT M.CUST_NO 														/*고객 번호*/
+		                             , D.ST_DT															/*기준 일자*/
+				                     , SUM(CASE WHEN D.PNT_DS_CD = '100' THEN CASE WHEN D.PNT_DS_DT_CD IN ('101') THEN D.PNT
+				                                                                   WHEN D.PNT_DS_DT_CD IN ('104') THEN D.PNT*-1
+				                                                              END
+				                                ELSE 0													/*해당 되지 않는 것은 0으로*/
+				                           END) RSVG_PNT												/*적립 포인트*/
+				                     , SUM(CASE WHEN D.PNT_DS_CD = '200' THEN CASE WHEN D.PNT_DS_DT_CD IN ('201') THEN D.PNT*-1 
+				                                                                   WHEN D.PNT_DS_DT_CD IN ('202') THEN D.PNT
+				                                                              END
+				                                ELSE 0													/*해당 되지 않는 것은 0으로*/
+				                           END) US_PNT													/*사용 포인트*/
+				                     , SUM(CASE WHEN D.PNT_DS_DT_CD IN ('102','103') THEN D.PNT ELSE 0 END) HNDC_PNT
+				                 FROM CS_CUST_PNT_M M													/*M으로 alias 지정한 CS_CUST_PNT_M 에서*/
+		                   INNER JOIN CS_CUST_PNT_D D													/*회원 포인트 이력*/
+		                     ON M.CUST_NO = D.CUST_NO													/*CS_CUST_PNT_M 고객번호와 CS_CUST_PNT_D 고객번호가 일치 하는곳*/
+				                WHERE 1=1
+				                GROUP BY M.CUST_NO, D.ST_DT												/*고객 번호로 그룹화*/
+				            ) RST
+		                WHERE 1=1
+		                GROUP BY CUST_NO
+		                ) PNT																			/*PNT로 명명*/
+		ON CUST.CUST_NO = PNT.CUST_NO																	/*CS_CUST01_MT 고객 번호와 PNT.CS_CUST_PNT_M 고객번호가 일치 하는곳*/
+		WHERE 1=1
+		 AND CUST.CUST_NO = #{cust_no}
+	 </select>
+	 
+	 
+	 
+	 
+	 
+	 
+	 <!-- 2pg 고객정보 변경 처리 TABLE UPDATE -->
+	 <update id="updCust" parameterType="HashMap">
+	 UPDATE CS_CUST01_MT 
+	     SET CUST_NM      = #{cust_nm}												/*고객 이름*/
+			,SEX_CD       = #{sex_cd}												/*고객 성별*/
+			,SCAL_YN      = #{scal_yn}												/*양력 음력*/
+			,BRDY_DT      = REPLACE(#{brdy_dt}, '-', '')							/*생년 월일 '-' 가 있으면 없앤다*/
+			,MRRG_DT      = REPLACE(#{mrrg_dt}, '-', '')							/*결혼기념일 '-' 가 있으면 없앤다*/
+			,POC_CD       = #{poc_cd}												/*직업 코드*/
+			,MBL_NO       = #{mbl_no}												/*핸드폰 번호*/
+			,PSMT_GRC_CD  = #{psmt_grc_cd}											/*우편물 수령 자택*/
+			,EMAIL        = CONCAT(CONCAT(#{email}, '@'), #{email_dtl})				/*이메일*/
+			,ADDR         = #{addr}													/*주소*/
+			,ADDR_DTL     = #{addr_dtl}												/*상세 주소*/
+			,CUST_SS_CD   = #{cust_ss_cd}											/*고객 상태 코드*/
+			<if test="js_dt != null">												/*고객 상태 변경시에 따른 날짜 삽입을 위한*/
+			,JS_DT        = REPLACE(#{js_dt}, '-', '')								/*해지에서 다시 정상으로 갈때의 가입 날짜*/
+			</if>
+			<if test="stp_dt != null">												/*중지 날짜*/
+			,STP_DT       = REPLACE(#{stp_dt}, '-', '')
+			</if>
+			<if test="cncl_dt != null">												/*해지 날짜*/
+			,CNCL_DT      = REPLACE(#{cncl_dt}, '-', '')
+			</if>
+			<if test="cncl_cnts != null">											/*해지 버튼 클릭시 해지 사유 삽입*/
+			,CNCL_CNTS    = #{cncl_cnts}
+			</if>
+			,JN_PRT_CD    = #{jn_prt_cd}											/*가입 매장*/
+			,EMAIL_RCV_YN = #{email_rcv_yn}											/*이메일 수신동의*/
+			,SMS_RCV_YN   = #{sms_rcv_yn}											/*sms 수신 동의*/
+			,DM_RCV_YN    = #{dm_rcv_yn}											/*dm 수신 동의*/
+			,LST_UPD_DT   = SYSDATE													/*최종 수정 일자*/
+			,LST_UPD_ID   = #{user_id}												/*최종 수정 아이디*/
+	 WHERE 1=1
+	  AND CUST_NO = #{cust_no_dis}													/*고객 번호가 같은 곳에 넣는다*/
+	 </update>
+	 
+	 
+	 
+	 
+	 
+	 
+	<!-- 2pg 고객정보 변경 후 히스토리 TABLE INSERT -->
+	<!--primary key 인 일련번호를 자동 생성 하기 위해 select key 사용  -->
+	<insert id="updCustHist" parameterType="HashMap">
+		<selectKey keyProperty="chg_seq" order="BEFORE" resultType="int">
+			SELECT NVL(MAX(CHG_SEQ), 0) + 1 FROM SD_CUST01_HT WHERE CUST_NO = #{cust_no} AND CHG_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		</selectKey>
+		INSERT INTO SD_CUST01_HT (CUST_NO											/*고객 번호*/
+								, CHG_DT											/*변경 일자*/
+								, CHG_SEQ											/*일련 번호*/
+								, CHG_CD											/*변경 코드*/
+								, CHG_BF_CNT										/*변경 전 내용*/
+								, CHG_AFT_CNT										/*변경 후 내용*/
+								, FST_REG_DT										/*최초 등록 일자*/
+								, FST_USER_ID										/*최초 등록자*/
+								, LST_UPD_DT										/*최종 수정 일자*/
+								, LST_UPD_ID)										/*최종 수정자*/
+						VALUES (#{cust_no}											/*변경 내역을 넣을 고객 번호*/
+							,TO_CHAR(SYSDATE, 'YYYYMMDD')							/*변경 일자*/
+							,#{chg_seq}												/*selectKey로 자동 생성*/
+							,UPPER(#{chg_cd})										/*대문자 변환하여 변경 코드 입력*/
+							,#{chg_bf_cnt}											/*변경 전 내용*/
+							,#{chg_aft_cnt}											/*변경 후 내용*/
+							,SYSDATE												/*지금 날짜*/
+							,#{user_id}												/*로그인 해 들어온 아이디*/
+							,SYSDATE												/*지금 날짜*/
+							,#{user_id})											/*로그인 해 들어온 아이디*/
+	</insert>
+
+    
+    
+    
+    
+    
+    
+	<!-- 3pg 신규 모바일 중복 체크 -->
+		   
+	<select id="mobile" resultType="String" parameterType="HashMap">
+	
+			SELECT COUNT(MBL_NO) AS CNT  					/*같은 번호가 있다면 1 없으면 0으로*/
+			FROM CS_CUST01_MT								/*가져오기 위해 CS_CUST01_MT 에서*/
+			WHERE MBL_NO = #{mbl_no}						/*같은 값이 있나 체크*/
+			
+	</select>
+    
+    
+
+    
+    
+
+	
+
+	<!-- 3pg 신규고객등록 -->
+	<!--신규 고객 번호를 생성하기 위해 selectKey를 사용-->
+	<insert id="newCust33" parameterType="HashMap">
+		<selectKey keyProperty="cust_no" order="BEFORE" resultType="int">
+			SELECT NVL(MAX(CUST_NO), 1000000000) + 1 FROM CS_CUST01_MT
+		</selectKey>
+		INSERT INTO CS_CUST01_MT (CUST_NO								/*고객 번호*/
+								,CUST_NM								/*고객 이름*/
+								,SEX_CD									/*고객 성별*/
+								,SCAL_YN  								/*양력 음력*/
+								,BRDY_DT								/*생년월일*/
+								,MRRG_DT								/*결혼 기념일*/
+								,POC_CD									/*우편번호*/
+								,MBL_NO									/*핸드폰 번호*/
+								,PSMT_GRC_CD							/*우편물 수령 자택 직장*/
+								,EMAIL									/*이메일*/
+								,ADDR									/*주소*/
+								,ADDR_DTL								/*상세 주소*/
+								,JN_PRT_CD								/*가입 매장*/
+								,EMAIL_RCV_YN							/*이메일 수신동의*/
+								,SMS_RCV_YN								/*SMS 수신동의*/
+								,DM_RCV_YN								/*DM 수신동의*/
+								,FST_JS_DT								/*최초 가입 일자*/
+								,JS_DT									/*가입 일자*/			
+								,FST_REG_DT								/*최초 등록 일자*/
+								,FST_USER_ID							/*최초 등록자*/
+								,LST_UPD_DT								/*최종 수정일자*/
+								,LST_UPD_ID)							/*최종 수정자*/
+								
+						VALUES (#{cust_no}								/*select key를 이용해 자동 증가된 고객 번호*/
+							,#{cust_nm}									/*고객 이름*/
+							,#{sex_cd}									/*고객 성별*/
+							,#{scal_yn}									/*양력 음력*/
+							,#{brdy_dt}	 								/*생년월일*/		
+							,#{mrrg_dt}									/*결혼 기념일*/
+							,#{poc_cd}									/*우편번호*/
+							,#{mbl_no}									/*핸드폰 번호*/
+							,#{psmt_grc_cd}								/*우편물 수령 자택 직장*/
+							,#{email}									/*이메일*/
+							,#{addr}									/*주소*/
+							,#{addr_dtl}								/*상세 주소*/
+							,#{jn_prt_cd}								/*가입 매장*/
+							,#{email_rcv_yn}							/*이메일 수신동의*/
+							,#{sms_rcv_yn}								/*SMS 수신동의*/
+							,#{dm_rcv_yn}								/*DM 수신동의*/
+							,TO_CHAR(SYSDATE, 'YYYYMMDD')				/*최초 가입 일자*/
+							,TO_CHAR(SYSDATE, 'YYYYMMDD')				/*가입 일자*/	
+							,SYSDATE									/*최초 등록 일자*/
+							,#{user_id}									/*최초 등록자*/
+							,SYSDATE									/*최종 수정일자*/
+							,#{user_id})								/*최종 수정자*/
+							
+	</insert>
+	
+	
+	
+	
+	<!-- 3pg 신규고객등록 후 포인트 적립 (상세) -->
+	<!-- selectKey를 이용해 PNT_SEQ 자동 생성 -->
+	<insert id="newCustPntD" parameterType="HashMap">
+		<selectKey keyProperty="pnt_seq" order="BEFORE" resultType="int">
+			SELECT NVL(MAX(PNT_SEQ), 0) + 1 FROM CS_CUST_PNT_D WHERE CUST_NO = #{cust_no} AND ST_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		</selectKey>
+		INSERT INTO CS_CUST_PNT_D (CUST_NO											/*CS_CUST_PNT_D 테이블에 고객번호*/
+								, ST_DT												/*기준 일자*/
+								, PNT_SEQ											/*일련 번호*/
+								, PNT_DS_CD											/*포인트 구분 코드*/
+								, PNT_DS_DT_CD										/*포인트 구분 상세 코드*/
+								, PNT												/*포인트*/
+								, FST_REG_DT										/*최초 등록 일자*/
+								, FST_USER_ID										/*최초 등록자*/
+								, LST_UPD_DT										/*최종 수정일자*/
+								, LST_UPD_ID)										/*최종 수정자*/
+						VALUES (#{cust_no}											/*신규 가입시 생성되었던 고객번호*/
+							,TO_CHAR(SYSDATE, 'YYYYMMDD')							/*오늘 날짜*/
+							,#{pnt_seq}												/*selectKey로 생성된 일련번호*/
+							,#{pnt_ds_cd}											/*포인트 구분 코드*/
+							,#{pnt_ds_dt_cd}										/*포인트 구분 상세 코드*/
+							,#{pnt}													/*포인트*/
+							,SYSDATE												/*최초 등록 일자로 등록될 지금 날짜*/
+							,#{user_id}												/*최초 등록자로 등록될 로그인할때 쓴 아이디*/
+							,SYSDATE												/*최종 수정 일자로 등록될 지금 날짜*/
+							,#{user_id})											/*최종 수정자로 등록될 로그인할때 쓴 아이디*/
+	</insert>
+	
+	
+	
+	
+	
+	
+	<!-- 3pg 신규고객등록 후 포인트 적립 (마스터) -->
+	<!-- MERGE문을 이용해 Select와 Insert문을 한번에 처리 -->
+	<insert id="newCustPntM" parameterType="HashMap">
+		MERGE INTO CS_CUST_PNT_M M														/*M으로 alias 지정 한 CS_CUST_PNT_M*/
+		USING (
+		        SELECT CUST_NO															/*고객 번호*/
+		             , (NVL(RSVG_PNT, 0)+NVL(HNDC_PNT, 0)) TOT_PNT						/*총 포인트 = 적립 포인트 + 수기 포인트*/
+		             , NVL(RSVG_PNT, 0) RSVG_PNT										/*적립 포인트*/
+		             , NVL(US_PNT, 0) US_PNT											/*사용 포인트*/
+		             , ((NVL(RSVG_PNT, 0)+NVL(HNDC_PNT, 0))-NVL(US_PNT, 0)) AVB_PNT		/*가용포인트 = 적립 포인트 + 수기포인트 - 사용포인트 */
+		             , NVL(HNDC_PNT, 0) HNDC_PNT										/*수기 포인트*/
+		        FROM (
+		                SELECT CUST_NO 													/*고객 번호*/
+		                		<!--CS_CUST_PNT_D에 PNT_DS_CD 가 100(적립) 일때 PNT_DS_DT_CD가 101(구매 적립) 이면 PNT 양수로  -->
+		                		<!--CS_CUST_PNT_D에 PNT_DS_CD 가 100(적립) 일때 PNT_DS_DT_CD가 104(구매 적립 취소) 이면 PNT 음수로  -->
+		                     , SUM(CASE WHEN PNT_DS_CD = '100' THEN CASE WHEN PNT_DS_DT_CD IN ('101') THEN PNT
+		                                                                 WHEN PNT_DS_DT_CD IN ('104') THEN PNT*-1
+		                                                            END
+		                                ELSE 0											/*해당 되지 않는 것은 0으로*/
+		                           END) RSVG_PNT										/*적립 포인트*/
+		                        <!--CS_CUST_PNT_D에 PNT_DS_CD 가 200(사용) 일때 PNT_DS_DT_CD가 201(구매 사용) 이면 PNT 음수로   -->
+		                        <!--CS_CUST_PNT_D에 PNT_DS_CD 가 200(사용) 일때 PNT_DS_DT_CD가 202(구매 사용 취소) 이면 PNT 양수로   -->										
+		                     , SUM(CASE WHEN PNT_DS_CD = '200' THEN CASE WHEN PNT_DS_DT_CD IN ('201') THEN PNT*-1 
+		                                                                 WHEN PNT_DS_DT_CD IN ('202') THEN PNT
+		                                                            END
+		                                ELSE 0											/*해당 되지 않는 것은 0으로*/
+		                           END) US_PNT											/*사용 포인트*/
+		                     <!--CS_CUST_PNT_D에 PNT_DS_DT_CD에 102(회원 가입 포인트) , 103(이벤트 적립) 이면 수기 포인트  -->    
+		                     , SUM(CASE WHEN PNT_DS_DT_CD IN ('102','103') THEN PNT ELSE 0 END) HNDC_PNT
+		                 FROM CS_CUST_PNT_D												/*회원 포인트 이력*/
+		                WHERE 1=1
+		                 AND ST_DT   = TO_CHAR(SYSDATE, 'YYYYMMDD')						/*기준 일자*/
+		                 AND CUST_NO = #{cust_no}										/*고객 번호*/
+		                 AND PNT_SEQ = #{pnt_seq}										/*신규 가입시 생성된 시퀀스 사용*/
+		                GROUP BY CUST_NO												/*고객 번호로 그룹화*/
+		            )
+		      ) D																		/*D로 지정*/
+		ON (M.CUST_NO = D.CUST_NO)														/*CS_CUST_PNT_M 테이블에 고객번호와 포인트 고객번호가 같은곳*/
+		WHEN MATCHED THEN																/*값이 있다면*/
+		UPDATE SET M.TOT_PNT    = (M.TOT_PNT+D.TOT_PNT)									/*원래 있던 총 포인트 + D에서 만들어진 총 포인트*/
+		          ,M.RSVG_PNT   = (M.RSVG_PNT+D.RSVG_PNT)								/*원래 있던 적립 포인트+ D에서 만들어진 적립 포인트*/
+		          ,M.US_PNT     = (M.US_PNT+D.US_PNT)									/*원래 있던 사용 포인트+ D에서 만들어진 사용 포인트*/
+		          ,M.AVB_PNT    = (M.AVB_PNT+D.AVB_PNT)									/*원래 있던 가용 포인트+ D에서 만들어진 가용 포인트*/
+		          ,M.HNDC_PNT   = (M.HNDC_PNT+D.HNDC_PNT)								/*원래 있던 수기 포인트+ D에서 만들어진 수기 포인트*/		
+		          ,M.LST_UPD_DT = SYSDATE												/*최종 수정 일자*/							
+		          ,M.LST_UPD_ID = #{user_id}											/*최종 수정자*/
+		WHEN NOT MATCHED THEN															/*값이 없다면*/
+		INSERT (M.CUST_NO																/*고객 번호*/
+		      , M.TOT_PNT																/*총 포인트*/
+		      , M.RSVG_PNT																/*적립 포인트*/
+		      , M.US_PNT																/*사용 포인트*/
+		      , M.AVB_PNT																/*가용 포인트*/
+		      , M.HNDC_PNT																/*수기 포인트*/
+		      , M.FST_REG_DT															/*최초 등록 일자*/
+		      , M.FST_USER_ID															/*최초 등록자*/
+		      , M.LST_UPD_DT															/*최종 수정 일자*/
+		      , M.LST_UPD_ID) 															/*최종 수정자*/
+		VALUES (D.CUST_NO																/*고객 번호*/
+		      , D.TOT_PNT																/*총 포인트*/
+		      , D.RSVG_PNT																/*적립 포인트*/
+		      , D.US_PNT																/*사용 포인트*/
+		      , D.AVB_PNT																/*가용 포인트*/
+		      , D.HNDC_PNT																/*수기 포인트*/
+		      , SYSDATE																	/*지금 날짜*/
+		      , #{user_id}																/*최초 등록자*/
+		      , SYSDATE																	/*지금 날짜*/
+		      , #{user_id})																/*최종 수정자*/
+		      
+	</insert>
+	
+	
+	    
+	    
+	    
+	    
+	    
+    
+    <!-- 4 페이지 테이블 불러오기 고객 조회-->
+   	<resultMap type="HashMap" id="searchCust">
+	<result property="CUST_NO" 		column="CUST_NO" 		javaType="String" />
+	<result property="CUST_NM" 		column="CUST_NM" 		javaType="String" />
+	<result property="MBL_NO" 		column="MBL_NO" 		javaType="String" />
+	<result property="CUST_SS_CD" 	column="CUST_SS_CD" 	javaType="String" />
+	<result property="AVB_PNT" 	    column="AVB_PNT" 	    javaType="String" />
+	</resultMap>
+    <select id="fourtable" resultMap="searchCust" parameterType="HashMap">
+    
+		
+           SELECT A.CUST_NO													/*고객 번호*/
+		      ,CUST_NM														/*고객 이름*/
+		      , SUBSTR(MBL_NO, 1, 3) || '-' ||								/*핸드폰 번호 앞세자리 자르고 - 붙이고 */
+	       		SUBSTR(MBL_NO, 4, LENGTH(MBL_NO)-7 ) || '-' ||				/*핸드폰 번호 4번쨰 자리부터 번호에 길이에 7번 자리까지 자르고  - 붙이고*/
+	      		SUBSTR(MBL_NO, -4) AS MBL_NO 								/*번호 뒤에서 시작해서 4자리 자르기 MBL_NO 명명*/
+		      , D.DTL_CD_NM AS CUST_SS_CD									/*서브 쿼리로 상태 가져오기 CUST_SS_CD로 명명*/
+		      , TRIM(TO_CHAR(P.AVB_PNT, '999,999,999,999,999')) AS AVB_PNT
+                                                                           
+			FROM CS_CUST01_MT A												/*CS_CUST01_MT를 A로 alias 지정*/
+	        LEFT OUTER JOIN MA_CODE_DT D									/*MA_CODE_DT를 D로 alias 지정과 left outer join*/
+			ON D.CODE_CD = 'CUST_SS_CD' AND A.CUST_SS_CD = D.DTL_CD			/* 코드 테이블 고객상태를 가져오기 위해 MA_CODE_DT에 공통 코드가 'CUST_SS_CD' 이며 */
+			INNER JOIN CS_CUST_PNT_M P
+            ON A.CUST_NO = P.CUST_NO
+	        WHERE 1=1														/*CS_CUST01_MT에 고객상태 코드와 MA_CODE_DT 세부 코드가 같은 곳*/
+         
+        <if test='cust_nm != ""'>																		/* 고객이름칸에 값이 있다면*/
+        	AND  ( A.CUST_NO LIKE '%' || #{cust_nm} || '%' OR  CUST_NM LIKE '%' || #{cust_nm} || '%' ) 	/* 고객번호나 고객 이름이 비슷한 값이 있다면 불러온다*/
+        </if>
+        
+        
+		<if test='mbl_no != ""'>   											/*핸드폰 번호에 값이 있다면*/
+		  AND   MBL_NO  =  #{mbl_no} 										/*정확한 값을 체크한다*/
+		</if>    
+		     						
+		ORDER BY A.CUST_NO ASC												/*CUST_NO 오름차순*/
+    	
+  	  </select>
+    
+    
+    
+    
+     
+     
+     
+    
+   <!--  5pg 변경이력 -->
+   	<resultMap type="HashMap" id="hisMap">
+   		<result property="CUST_NO" 		column="CUST_NO" 		javaType="String" />
+   		<result property="CUST_NM" 		column="CUST_NM" 		javaType="String" />
+	   <result property="CHG_DT" 		column="CHG_DT" 		javaType="String" />
+	   <result property="CHG_CD" 		column="CHG_CD" 		javaType="String" />
+	   <result property="CHG_BF_CNT" 	column="CHG_BF_CNT" 	javaType="String" />
+	   <result property="CHG_AFT_CNT" 	column="CHG_AFT_CNT" 	javaType="String" />
+	   <result property="LST_UPD_ID" 	column="LST_UPD_ID" 	javaType="String" />
+	   <result property="LST_UPD_DT" 	column="LST_UPD_DT" 	javaType="String" />
+	</resultMap>
+	
+		<select id="history" resultMap="hisMap" parameterType="HashMap">
+	SELECT A.CUST_NO AS CUST_NO         													/*CS_CUST01_MT 의 고객 번호*/                                            		
+	     , A.CUST_NM AS CUST_NM 															/*CS_CUST01_MT 의 고객 이름*/                                                    		
+	     , TO_CHAR(TO_DATE(B.CHG_DT), 'YYYY-MM-DD') AS CHG_DT 								/*SD_CUST01_HT 의 변경일자 */                    		
+	     , CM.CODE_NM AS CHG_CD  									                        /*MA_CODE_MT의  공통 코드명 */                   		
+	     , CASE WHEN BCD.DTL_CD_NM IS NOT NULL THEN BCD.DTL_CD_NM							/*MA_CODE_DT의 세부 코드 명이 null 이 아닐때*/
+         
+                WHEN B.CHG_CD = 'JN_PRT_CD'													/*SD_CUST01_HT 변경 코드가 매장코드 일때*/					
+                THEN (SELECT PRT_NM FROM MA_PRT_MT M WHERE M.PRT_CD = B.CHG_BF_CNT) 		/*MA_PRT_MT의 매장명으로, 변경 코드값이 일치 하는 곳에서*/		
+                
+                WHEN B.CHG_CD = 'BRDY_DT'                                                   /*SD_CUST01_HT 변경 코드가 생년월일 일떄*/
+                THEN TO_CHAR(TO_DATE(B.CHG_BF_CNT), 'YYYY-MM-DD')	                        /*년 월 일 형으로 변환*/
+                
+                WHEN B.CHG_CD = 'MRRG_DT'                                                   /*SD_CUST01_HT 변경 코드가 결혼기념일 일떄*/
+                THEN TO_CHAR(TO_DATE(B.CHG_BF_CNT), 'YYYY-MM-DD')							/*년 월 일 형으로 변환*/
+                
+                WHEN  B.CHG_CD = 'MBL_NO' AND LENGTH (B.CHG_BF_CNT) = 10					/*SD_CUST01_HT 변경 코드가 10자리 핸드폰번호일 일떄 */
+                THEN SUBSTR(B.CHG_BF_CNT,1,3) || '-' || SUBSTR(B.CHG_BF_CNT,4,3) || '-' || SUBSTR(B.CHG_BF_CNT,7)  /*핸드폰 자릿수에 맞게 자르고 '-' 를 붙여준다*/
+                
+                WHEN B.CHG_CD = 'MBL_NO' AND LENGTH (B.CHG_BF_CNT) = 11						/*SD_CUST01_HT 변경 코드가 11자리 핸드폰번호일 일떄 */
+                THEN SUBSTR(B.CHG_BF_CNT,1,3) || '-' || SUBSTR(B.CHG_BF_CNT,4,4) || '-' || SUBSTR(B.CHG_BF_CNT,8)  /*핸드폰 자릿수에 맞게 자르고 '-' 를 붙여준다*/
+                
+                ELSE NVL(B.CHG_BF_CNT, '-') 												/*null값은 '-'로 처리한다*/												
+                END AS CHG_BF_CNT  															/*CHG_BF_CNT로 쓴다*/                                   						
+                
+         , CASE WHEN ACD.DTL_CD_NM IS NOT NULL THEN ACD.DTL_CD_NM							/*MA_CODE_DT에 세부코드 명이 있을떄*/
+                
+                WHEN B.CHG_CD = 'JN_PRT_CD'													/*SD_CUST01_HT 변경 코드가 매장코드 일때*/				
+                THEN (SELECT PRT_NM FROM MA_PRT_MT M WHERE M.PRT_CD = B.CHG_AFT_CNT) 		/*MA_PRT_MT의 매장명으로 , 변경 코드값이 일치 하는 곳에서*/	
+                
+                WHEN B.CHG_CD = 'BRDY_DT'                                                   /*SD_CUST01_HT 변경 코드가 생년월일 일떄*/
+                THEN TO_CHAR(TO_DATE(B.CHG_AFT_CNT), 'YYYY-MM-DD')	                        /*년 월 일 형으로 변환*/
+                
+                WHEN B.CHG_CD = 'MRRG_DT'                                                   /*SD_CUST01_HT 변경 코드가 결혼기념일 일떄*/
+                THEN TO_CHAR(TO_DATE(B.CHG_AFT_CNT), 'YYYY-MM-DD')							/*년 월 일 형으로 변환*/
+                
+                WHEN B.CHG_CD = 'MBL_NO' AND LENGTH (B.CHG_AFT_CNT) = 10					/*SD_CUST01_HT 변경 코드가 10자리 핸드폰번호일 일떄 */
+                THEN SUBSTR(B.CHG_AFT_CNT,1,3) || '-' || SUBSTR(B.CHG_AFT_CNT,4,3) || '-' || SUBSTR(B.CHG_AFT_CNT,7) /*핸드폰 자릿수에 맞게 자르고 '-' 를 붙여준다*/
+                
+                WHEN B.CHG_CD = 'MBL_NO' AND LENGTH (B.CHG_AFT_CNT) = 11					/*SD_CUST01_HT 변경 코드가 11자리 핸드폰번호일 일떄 */
+                THEN SUBSTR(B.CHG_AFT_CNT,1,3) || '-' || SUBSTR(B.CHG_AFT_CNT,4,4) || '-' || SUBSTR(B.CHG_AFT_CNT,8) /*핸드폰 자릿수에 맞게 자르고 '-' 를 붙여준다*/
+                
+                ELSE NVL(B.CHG_AFT_CNT, '-') 												/*null값은 '-'로 처리한다*/								
+                END AS CHG_AFT_CNT                                     						/*CHG_AFT_CNT로 쓴다*/		
+	     , B.LST_UPD_ID || '/' ||          													/*최종 수정 아이디에 /를 붙이고*/                                         		
+	       (SELECT USER_NM FROM MA_USER_MT WHERE USER_ID = B.LST_UPD_ID)  					/*MA_USER_MT에 이름과 SD_CUST01_HT의 최종 수정아이디가 같은 곳*/          		
+	       AS LST_UPD_ID 																	/*최종 수정 아이디로 쓴다*/
+	     , TO_CHAR(B.LST_UPD_DT, 'YYYY-MM-DD HH24:MI:SS') AS LST_UPD_DT             		/*최종 수정 날짜를 형변환하여 같이 표기*/
+	     
+		FROM CS_CUST01_MT A 																	/*CS_CUST01_MT 를 A로 alias 지정*/
+	    INNER JOIN SD_CUST01_HT B                            									/*SD_CUST01_HT 를 B로 alias 지정 과 inner join*/       		
+		 ON A.CUST_NO = B.CUST_NO  																/*CS_CUST01_MT와 SD_CUST01_HT의 고객 명이 같은 곳*/                                                      		
+	    LEFT OUTER JOIN MA_CODE_MT CM															/*MA_CODE_MT 를 CM으로 alias 지정과 left outer join 한다*/
+	     ON B.CHG_CD = CM.CODE_CD																/*SD_CUST01_HT의 변경 코드와 MA_CODE_MT의 공통 코드명이 같은곳*/
+	    LEFT OUTER JOIN MA_CODE_DT BCD															/*변경전 내용을 가져오기위해 BCD로 alias 지정*/
+	     ON B.CHG_CD = BCD.CODE_CD AND B.CHG_BF_CNT = BCD.DTL_CD								/*SD_CUST01_HT의 변경 코드와 MA_CODE_MT의 공통 코드명이 같은곳 그리고 SD_CUST01_HT의 변경 전 내용과 MA_CODE_MT의 세부 코드가 같은곳*/
+	    LEFT OUTER JOIN MA_CODE_DT ACD															/*변경후 내용을 가져오기위해 ACD로 alias 지정*/
+	     ON B.CHG_CD = ACD.CODE_CD AND B.CHG_AFT_CNT = ACD.DTL_CD								/*SD_CUST01_HT의 변경 코드와 MA_CODE_MT의 공통 코드명이 같은곳 그리고 SD_CUST01_HT의 변경 후 내용과 MA_CODE_MT의 세부 코드가 같은곳*/
+		WHERE A.CUST_NO = #{cust_no}      														/*고객 명을 넣어 해당 되는 데이터를 가져온다*/                                          		
+		ORDER BY LST_UPD_DT DESC 																/*SD_CUST01_HT의 변경 코드와 MA_CODE_MT의 공통 코드명이 같은곳 그리고 SD_CUST01_HT의 변경 후 내용과 MA_CODE_MT의 세부 코드가 같은곳*/
+	
+	
+  	</select> 
+   
+   
+   
+   
+
+
+    
+    
+    <!-- 6 페이지 테이블 불러오기 매장 조회-->
+   	<resultMap type="HashMap" id="searchShop">
+	<result property="PRT_CD" 		column="PRT_CD" 		javaType="String" />
+	<result property="PRT_NM" 		column="PRT_NM" 		javaType="String" />
+	<result property="PRT_DT_CD" 	column="PRT_DT_CD" 		javaType="String" />
+	<result property="PRT_SS_CD" 	column="PRT_SS_CD" 		javaType="String" />
+	</resultMap>
+    <select id="sixTable" resultMap="searchShop" parameterType="HashMap">
+    <![CDATA[
+									
+		 SELECT M.PRT_CD										/*거래처 코드*/
+		,M.PRT_NM												/*거래처 이름*/
+		,M.PRT_DT_CD											/*거래처 구분 코드*/
+        ,D.DTL_CD_NM AS PRT_SS_CD								/*PRT_SS_CD 로 명명 */
+		FROM MA_PRT_MT  M
+        LEFT OUTER JOIN MA_CODE_DT D							/*코드 테이블 가져오기*/
+		ON D.CODE_CD = 'PRT_SS_CD' AND M.PRT_SS_CD = D.DTL_CD	/* MA_PRT_MT 테이블에서 가져온다*/         									
+		WHERE M.PRT_DT_CD = '2'                   				/* 거래처 상태코드가 2 이면*/        									
+		  AND ( PRT_CD LIKE '%' || #{in_prt} || '%'    			/*거래처 코드가 들어온 값과 부분일치하거나*/         						
+		   OR   PRT_NM LIKE '%' || #{in_prt} || '%' )    		/*거래처 이름이 들어온 값과 부분 일치할때*/       						
+		ORDER BY M.PRT_CD ASC									/*PRT_CD 오름차순 정렬*/
+		
+    	]]>
+    </select>
+    
+    
+
+
+
+
+
+    
+    
+	    <!-- 7페이지 매장 실적 관리 -->
+	    
+	    <resultMap type="HashMap" id="getTotalTable">
+		<result property="PRT_CD" 		column="PRT_CD" 		javaType="String" />
+		<result property="PRT_NM" 		column="PRT_NM" 		javaType="String" />
+		<result property="SAL_1_QTY" 	column="SAL_1_QTY" 		javaType="String" />
+		<result property="SAL_2_QTY" 	column="SAL_2_QTY"  	javaType="String" />
+		<result property="SAL_3_QTY" 	column="SAL_3_QTY" 		javaType="String" />
+		<result property="SAL_4_QTY" 	column="SAL_4_QTY" 	    javaType="String" />
+		<result property="SAL_5_QTY" 	column="SAL_5_QTY" 		javaType="String" />
+		<result property="SAL_6_QTY" 	column="SAL_6_QTY" 	    javaType="String" />
+		<result property="SAL_7_QTY" 	column="SAL_7_QTY" 		javaType="String" />
+		<result property="SAL_8_QTY" 	column="SAL_8_QTY" 	    javaType="String" />
+		<result property="SAL_9_QTY" 	column="SAL_9_QTY" 		javaType="String" />
+		<result property="SAL_10_QTY" 	column="SAL_10_QTY" 	javaType="String" />
+		<result property="SAL_11_QTY" 	column="SAL_11_QTY" 	javaType="String" />
+		<result property="SAL_12_QTY" 	column="SAL_12_QTY" 	javaType="String" />
+		<result property="SAL_13_QTY" 	column="SAL_13_QTY" 	javaType="String" />
+		<result property="SAL_14_QTY" 	column="SAL_14_QTY" 	javaType="String" />
+		<result property="SAL_15_QTY" 	column="SAL_15_QTY" 	javaType="String" />
+		<result property="SAL_16_QTY" 	column="SAL_16_QTY" 	javaType="String" />
+		<result property="SAL_17_QTY" 	column="SAL_17_QTY" 	javaType="String" />
+		<result property="SAL_18_QTY" 	column="SAL_18_QTY" 	javaType="String" />
+		<result property="SAL_19_QTY" 	column="SAL_19_QTY" 	javaType="String" />
+		<result property="SAL_20_QTY" 	column="SAL_20_QTY" 	javaType="String" />
+		<result property="SAL_21_QTY" 	column="SAL_21_QTY" 	javaType="String" />
+		<result property="SAL_22_QTY" 	column="SAL_22_QTY" 	javaType="String" />
+		<result property="SAL_23_QTY" 	column="SAL_23_QTY" 	javaType="String" />
+		<result property="SAL_24_QTY" 	column="SAL_24_QTY" 	javaType="String" />
+		<result property="SAL_25_QTY" 	column="SAL_25_QTY" 	javaType="String" />
+		<result property="SAL_26_QTY" 	column="SAL_26_QTY" 	javaType="String" />
+		<result property="SAL_27_QTY" 	column="SAL_27_QTY" 	javaType="String" />
+		<result property="SAL_28_QTY" 	column="SAL_28_QTY" 	javaType="String" />
+		<result property="SAL_29_QTY" 	column="SAL_29_QTY" 	javaType="String" />
+		<result property="SAL_30_QTY" 	column="SAL_30_QTY" 	javaType="String" />
+		<result property="SAL_31_QTY" 	column="SAL_31_QTY" 	javaType="String" />
+		<result property="TOT_SAL_QTY" 	column="TOT_SAL_QTY" 	javaType="String" />
+		</resultMap>
+    
+    
+    
+    
+    
+        
+ <!--    7번 테이블 -->
+    
+     <select id="totalTable" resultMap="getTotalTable" parameterType="HashMap">
+			/* 'sal' 이면 양수 아니면 -1을 곱해 음수로 만든다 다른 값이라면 0 */
+			/*01-31 일까지의 값을 만들어 준다*/
+			
+	
+		    SELECT M.PRT_CD
+		 , (SELECT PRT_NM FROM MA_PRT_MT WHERE PRT_CD = M.PRT_CD) PRT_NM
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '01' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_1_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '02' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_2_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '03' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_3_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '04' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_4_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '05' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_5_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '06' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_6_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '07' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_7_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '08' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_8_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '09' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_9_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '10' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_10_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '11' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_11_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '12' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_12_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '13' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_13_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '14' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_14_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '15' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_15_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '16' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_16_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '17' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_17_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '18' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_18_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '19' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_19_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '20' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_20_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '21' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_21_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '22' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_22_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '23' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_23_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '24' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_24_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '25' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_25_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '26' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_26_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '27' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_27_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '28' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_28_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '29' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_29_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '30' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_30_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '31' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_31_QTY 
+         , SUM(CASE WHEN M.SAL_TP_CD = 'SAL' THEN D.SAL_QTY ELSE D.SAL_QTY*-1 END) AS TOT_SAL_QTY     /* sal 이라면 SAL_QTY 에 1이 더해지고 음수라면*/
+    FROM CS_SAL01_MT M							/*CS_SAL01_MT를 M으로*/																  /*-1이라서 알아서 빠진다 TOT_SAL_QTY로 명명*/
+        ,CS_SAL01_DT D   						/*CS_SAL01_DT를 D로*/
+    WHERE 1=1
+     AND M.PRT_CD = D.PRT_CD					/*CS_SAL01_MT 의 거래처 코드와 CS_SAL01_DT의 거래처 코드가 맞는곳*/
+     AND M.SAL_DT = D.SAL_DT					/*CS_SAL01_MT 의 판매일자와 CS_SAL01_DT의 판매일자가 맞는곳*/
+     AND M.SAL_NO = D.SAL_NO					/*CS_SAL01_MT 의 판매번호와 CS_SAL01_DT의 판매번호가 맞는곳*/
+     AND SUBSTR(M.SAL_DT, 1, 6) = #{ym} 		/*판매일자에서 년 월만 나오게 자른다*/
+     
+     <if test='in_prt != ""'>					/*입력란에 값이 있다면*/
+     AND M.PRT_CD = #{in_prt}					/*가져온 값과 거래처코드가 같을때*/
+     </if> 
+
+      
+    GROUP BY M.PRT_CD							/* 거래처코드로 그룹화 */
+		
+    UNION ALL									/*UNION ALL로 합쳐진 쿼리는 각 쿼리에서 조회된 결과를 그대로 합쳐서 반환*/
+    
+    
+    
+		   SELECT '총합','합계'
+		   
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '01' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_1_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '02' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_2_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '03' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_3_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '04' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_4_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '05' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_5_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '06' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_6_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '07' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_7_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '08' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_8_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '09' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_9_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '10' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_10_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '11' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_11_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '12' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_12_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '13' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_13_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '14' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_14_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '15' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_15_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '16' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_16_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '17' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_17_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '18' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_18_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '19' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_19_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '20' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_20_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '21' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_21_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '22' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_22_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '23' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_23_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '24' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_24_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '25' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_25_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '26' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_26_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '27' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_27_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '28' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_28_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '29' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_29_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '30' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_30_QTY 
+         , SUM(CASE WHEN SUBSTR(M.SAL_DT, 7, 8) = '31' THEN DECODE(M.SAL_TP_CD, 'SAL', D.SAL_QTY, D.SAL_QTY*-1) ELSE 0 END) AS SAL_31_QTY 
+         , SUM(CASE WHEN M.SAL_TP_CD = 'SAL' THEN D.SAL_QTY ELSE D.SAL_QTY*-1 END) AS TOT_SAL_QTY 
+    FROM CS_SAL01_MT M								/*CS_SAL01_MT를 M으로*/
+        ,CS_SAL01_DT D								/*CS_SAL01_DT를 D로*/
+    WHERE 1=1
+     AND M.PRT_CD = D.PRT_CD						/*CS_SAL01_MT 의 거래처 코드와 CS_SAL01_DT의 거래처 코드가 맞는곳*/
+     AND M.SAL_DT = D.SAL_DT						/*CS_SAL01_MT 의 판매일자와 CS_SAL01_DT의 판매일자가 맞는곳*/
+     AND M.SAL_NO = D.SAL_NO						/*CS_SAL01_MT 의 판매번호와 CS_SAL01_DT의 판매번호가 맞는곳*/
+     AND SUBSTR(M.SAL_DT, 1, 6) = #{ym} 			/*판매일자에서 년 월만 나오게 자른다*/
+     
+     <if test='in_prt != ""'>						/*입력란에 값이 있다면*/
+     AND M.PRT_CD = #{in_prt}						/*가져온 값과 거래처코드가 같을때*/		
+     </if> 
+	
+	
+	</select>
+	
+	
+	
+	<!-- 1번 판매 조회 리스트 -->
+	
+	  <resultMap type="HashMap" id="panmeMain">
+   	   <result property="SAL_DT" 		column="SAL_DT" 		javaType="String" />
+   	   <result property="CUST_NO" 		column="CUST_NO" 		javaType="String" />
+   	   <result property="CUST_NM" 		column="CUST_NM" 		javaType="String" />
+	   <result property="SAL_NO" 		column="SAL_NO" 		javaType="String" />
+	   <result property="TOT_SAL_QTY" 	column="TOT_SAL_QTY" 	javaType="String" />
+	   <result property="TOT_SAL_AMT" 	column="TOT_SAL_AMT" 	javaType="String" />
+	   <result property="TOT_VOS_AMT" 	column="TOT_VOS_AMT" 	javaType="String" />
+	   <result property="TOT_VAT_AMT" 	column="TOT_VAT_AMT" 	javaType="String" />
+	   <result property="CSH_STLM_AMT" 	column="CSH_STLM_AMT" 	javaType="String" />
+	   <result property="CRD_STLM_AMT" 	column="CRD_STLM_AMT" 	javaType="String" />
+	   <result property="PNT_STLM_AMT" 	column="PNT_STLM_AMT" 	javaType="String" />
+	   <result property="CRD_NO" 		column="CRD_NO" 		javaType="String" />
+	   <result property="VLD_YM" 		column="VLD_YM" 		javaType="String" />
+	   <result property="CRD_CO_CD" 	column="CRD_CO_CD" 		javaType="String" />
+	   <result property="FST_USER_ID" 	column="FST_USER_ID" 	javaType="String" />
+	   <result property="FST_REG_DT" 	column="FST_REG_DT" 	javaType="String" />
+	</resultMap>
+	
+	
+	  <select id="panMainTable" resultMap="panmeMain" parameterType="HashMap">
+	  		/*상품 상태 알기 위해 작성*/
+			WITH RTN AS (
+					SELECT SAL.PRT_CD																	/*매장 코드*/
+					     , SAL.SAL_DT																	/*판매 일자*/
+					     , SAL.SAL_NO																	/*판매 번호*/
+					     , CASE WHEN SAL.SAL_TP_CD = 'RTN' THEN 'N'										/*상품 코드 상태가 RTN 이면 N*/
+					            WHEN SAL.SAL_TP_CD = 'SAL' AND (RTN.ORG_SHOP_CD IS NOT NULL				/*상품 코드 상태가 SAL 인데 원매장 코드가 있고*/
+					                                       AND RTN.ORG_SAL_DT IS NOT NULL				/*원판매 일자가 있고*/
+					                                       AND RTN.ORG_SAL_NO IS NOT NULL) THEN 'N'		/*원판매번호가 있다면 N*/
+					            ELSE 'Y'																/*나머지는 Y*/
+					        END AS RTN_USE_YN															/*3pg에서 버튼 비활성화를 위해 만듦*/
+					 FROM CS_SAL01_MT SAL																/*고객판매 테이블*/
+					LEFT OUTER JOIN CS_SAL01_MT RTN														
+					 ON SAL.PRT_CD = RTN.ORG_SHOP_CD													/*매장코드와 원매장코드*/
+					 AND SAL.SAL_DT = RTN.ORG_SAL_DT													/*판매일자와 원판매일자*/
+					 AND SAL.SAL_NO = RTN.ORG_SAL_NO													/*판매번호와 원판매번호가 같은 곳*/
+					WHERE 1=1
+					 AND SAL.SAL_DT BETWEEN TO_DATE(#{sal_from}, 'YYYY-MM-DD')							/*지정한 판매일자 사이*/
+			         AND TO_DATE(#{sal_to}, 'YYYY-MM-DD')
+			 		 AND SAL.PRT_CD = #{prt_cd}											
+			)
+    	
+		    SELECT SAL.SAL_DT																			/*판매 일자*/
+			     , SAL.CUST_NO																			/*고객 번호*/
+			     , CUST.CUST_NM																			/*고객 명*/
+			     , SAL.SAL_NO																			/*판매 번호*/
+			     , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_QTY ELSE DAL.SAL_QTY*-1 END)) TOT_SAL_QTY			/*총 판매수량*/
+			     , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_AMT ELSE DAL.SAL_AMT*-1 END)) TOT_SAL_AMT			/*총 판매금액*/
+			     , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_VOS_AMT ELSE DAL.SAL_VOS_AMT*-1 END)) TOT_VOS_AMT	/*총 공급가액*/
+                 , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_VAT_AMT ELSE DAL.SAL_VAT_AMT*-1 END)) TOT_VAT_AMT	/*총 부가세액*/
+			     , ABS(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.CSH_STLM_AMT ELSE SAL.CSH_STLM_AMT*-1 END) CSH_STLM_AMT		/*현금결제금액*/
+			     , ABS(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.CRD_STLM_AMT ELSE SAL.CRD_STLM_AMT*-1 END) CRD_STLM_AMT		/*카드결제금액*/
+			     , ABS(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.PNT_STLM_AMT ELSE SAL.PNT_STLM_AMT*-1 END) PNT_STLM_AMT		/*포인트결제금액*/
+			     , SAL.CRD_NO																			/*카드번호*/
+                 , SAL.VLD_YM																			/*유효년월*/
+                 , SAL.CRD_CO_CD																		/*카드회사*/
+			     , SAL.FST_USER_ID																		/*최초등록자*/
+			     , USMT.USER_NM AS FST_USER_NM															/*등록자 명*/
+			     , TO_CHAR(SAL.FST_REG_DT, 'YYYY-MM-DD') AS FST_REG_DT									/*최초등록일자*/
+			     , SAL.SAL_TP_CD																		/*상품상태코드*/
+			     , (SELECT RTN_USE_YN 																	/*반품 버튼을 위한 서브쿼리*/
+			         FROM RTN 
+			        WHERE PRT_CD = #{prt_cd} 
+			          AND SAL_DT = SAL.SAL_DT 
+			          AND SAL_NO = SAL.SAL_NO) AS RTN_USE_YN
+			FROM CS_SAL01_MT SAL																		/*고객판매 테이블*/
+			INNER JOIN CS_SAL01_DT DAL																	/*고객판매 상세 테이블*/
+            ON SAL.PRT_CD = DAL.PRT_CD																	/*매장 코드가 같은 곳*/
+            AND SAL.SAL_DT = DAL.SAL_DT																	/*판매 일자가 같은 곳*/
+            AND SAL.SAL_NO = DAL.SAL_NO																	/*판매 번호가 같은 곳*/
+			INNER JOIN CS_CUST01_MT CUST																/*고객관리 테이블*/
+			ON SAL.CUST_NO = CUST.CUST_NO																/*고객 코드가 같은 곳*/
+			INNER JOIN MA_USER_MT USMT																	/*사용자 테이블*/
+			ON SAL.FST_USER_ID = USMT.USER_ID															/*사용자 id가 같은 곳*/
+			WHERE 1=1
+			AND SAL.SAL_DT BETWEEN TO_DATE(#{sal_from}, 'YYYY-MM-DD')									/*판매 일자*/
+			        AND TO_DATE(#{sal_to}, 'YYYY-MM-DD')
+			 AND SAL.PRT_CD = #{prt_cd}																	/*매장코드*/
+			 
+			<if test='cust_no_dis != "" '>
+			    AND CUST.CUST_NO = #{cust_no_dis}														/*고객 번호*/
+			</if>
+			
+			GROUP BY SAL.SAL_DT																			/*판매 일자*/
+			       , SAL.CUST_NO																		/*고객 번호*/
+			       , CUST.CUST_NM																		/*고객 명*/
+			       , SAL.SAL_NO																			/*판매 일자*/
+			       , SAL.SAL_TP_CD																		/*상품 상태 코드*/
+			       , SAL.CRD_NO																			/*카드 번호*/
+                   , SAL.VLD_YM																			/*유효 년월*/
+                   , SAL.CRD_CO_CD																		/*카드 회사*/
+			       , SAL.FST_USER_ID																	/*최초 등록자*/
+			       , USMT.USER_NM																		/*사용 자명*/
+			       , SAL.FST_REG_DT																		/*최초 등록일자*/
+			       , SAL.CSH_STLM_AMT																	/*현금 결제금액*/
+                   , SAL.CRD_STLM_AMT																	/*카드 결제금액*/
+                   , SAL.PNT_STLM_AMT																	/*현금 결제금액*/
+			ORDER BY SAL.SAL_DT ASC																		/*판매 일자*/
+			       , SAL.SAL_NO																			/*판매 번호*/
+
+    	
+  	  </select>
+  	  
+  	  
+  	 
+  	 <!-- 판매 3번pg 상세 리스트  --> 
+  	 <resultMap type="HashMap" id="panSang">
+   	   <result property="PRD_CD" 		column="PRD_CD" 		javaType="String" />
+   	   <result property="PRD_NM" 		column="PRD_NM" 		javaType="String" />
+   	   <result property="SAL_QTY" 		column="SAL_QTY" 		javaType="String" />
+	   <result property="SAL_VOS_AMT" 	column="SAL_VOS_AMT" 	javaType="String" />
+	   <result property="SAL_VAT_AMT" 	column="SAL_VAT_AMT" 	javaType="String" />
+	   <result property="SAL_AMT" 		column="SAL_AMT" 		javaType="String" />
+	</resultMap>
+	
+	
+	  <select id="panSangTable" resultMap="panSang" parameterType="HashMap">
+    	
+		       	SELECT D.PRD_CD								/*매장 코드*/
+			         , P.PRD_NM								/*상품명*/
+			         , D.SAL_QTY							/*판매수량*/
+			         , D.SAL_VOS_AMT						/*판매공급가액*/
+			         , D.SAL_VAT_AMT						/*판매부가세액*/
+			         , D.SAL_AMT							/*판매금액*/
+			         , D.PRD_CSMR_UPR						/*소비자단가*/
+			    FROM
+			    CS_SAL01_DT D								/*고객판매상세 테이블*/
+			    INNER JOIN
+			    CS_SAL01_MT M								/*고객판매 테이블*/
+			    ON D.PRT_CD = M.PRT_CD						/*매장코드와*/
+			    AND D.SAL_DT = M.SAL_DT						/*판매 일자*/
+			    AND D.SAL_NO = M.SAL_NO						/*판매번호가 일치 하는 곳*/
+			    
+			    INNER JOIN
+			    MA_PRD01_MT P								/*상품관리 테이블*/
+			    ON D.PRD_CD = P.PRD_CD						/*상품 코드가 일치 하는곳*/
+			    WHERE 1=1
+			    AND D.PRT_CD = #{prt_cd}
+			    AND M.CUST_NO = #{cust_no}
+			    AND D.SAL_DT = #{sal_dt}
+			    AND D.SAL_NO = #{sal_no}
+
+    	
+  	  </select>
+	
+	
+	
+	
+	 <!-- 판매 4번pg 재고 리스트  --> 
+  	 <resultMap type="HashMap" id="jegoList">
+   	   <result property="PRD_CD" 		column="PRD_CD" 		javaType="String" />
+   	   <result property="PRD_NM" 		column="PRD_NM" 		javaType="String" />
+   	   <result property="IVCO_QTY" 		column="IVCO_QTY" 		javaType="String" />
+	   <result property="PRD_CSMR_UPR" 	column="PRD_CSMR_UPR" 	javaType="String" />
+	   <result property="PRD_TP_CD" 	column="PRD_TP_CD" 		javaType="String" />
+	   <result property="PRD_SS_CD" 	column="PRD_SS_CD" 		javaType="String" />
+	</resultMap>
+	
+	
+	  <select id="jegoTable" resultMap="jegoList" parameterType="HashMap">
+    	
+				
+				SELECT SD.PRT_CD						/*매장 명*/
+				     , SD.PRD_CD						/*상품 코드*/
+				     , MA.PRD_NM						/*상품 명*/
+				     , SD.IVCO_QTY						/*재고 수량*/
+				     , MA.PRD_TP_CD						/*상품 유형 코드*/
+				     , MA.PRD_SS_CD						/*상품 상태 코드*/
+				     ,TRIM(TO_CHAR(MA.PRD_CSMR_UPR, '999,999,999,999,999')) AS PRD_CSMR_UPR    /*소비자가*/
+				     
+				FROM SD_IVCO01_MT SD					/*매장현재고 테이블*/
+				LEFT OUTER JOIN							
+				MA_PRD01_MT MA							/*상품관리 테이블*/
+				ON SD.PRD_CD = MA.PRD_CD
+				INNER JOIN
+				MA_PRT_MT PM							/*거래처관리 테이블*/
+				ON SD.PRT_CD = PM.PRT_CD				/*매장현재고 매장코드와 거래처관리 매장코드가 같은 곳*/
+				WHERE 1=1
+				
+				<if test='prd_tp_20_dif == "Y"'>
+				AND MA.PRD_TP_CD != '20'
+				</if>
+				
+				<if test='prt_cd != ""'>
+				AND SD.PRT_CD = #{prt_cd}
+				</if>
+				
+				<if test='prd_nm != ""'>
+				AND ( SD.PRD_CD LIKE '%' || #{prd_nm} || '%' OR  MA.PRD_NM LIKE '%' || #{prd_nm} || '%' )
+				</if>
+				
+				ORDER BY PRD_CD DESC
+
+    	
+    	
+    	
+  	  </select>
+
+
+
+  	<!-- 2pg 판매등록 CS_SAL01_MT TABLE INSERT -->
+	<!--primary key 인 일련번호를 자동 생성 하기 위해 select key 사용  -->
+	<insert id="insSalMt" parameterType="HashMap">
+		<selectKey keyProperty="sal_no" order="BEFORE" resultType="int">
+			SELECT NVL(MAX(SAL_NO), 0) + 1 FROM CS_SAL01_MT WHERE PRT_CD = #{prt_cd} AND SAL_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		</selectKey>
+		INSERT INTO CS_SAL01_MT (PRT_CD											    /*매장코드*/
+								,SAL_DT											    /*판매일자*/
+								,SAL_NO											    /*판매번호*/
+								,SAL_TP_CD										    /*판매구분코드*/
+								,TOT_SAL_QTY									    /*총판매수량*/
+								,TOT_SAL_AMT									    /*총판매금액*/
+								,TOT_VOS_AMT										/*총공급가액*/
+								,TOT_VAT_AMT										/*총부가세액*/
+								,CSH_STLM_AMT										/*현금결제금액*/
+								,CRD_STLM_AMT										/*카드결제금액*/
+								,PNT_STLM_AMT										/*포인트사용금액*/
+								,CUST_NO											/*고객번호*/
+								,CRD_NO 											/*카드번호*/
+								,VLD_YM												/*유효년월*/
+								,CRD_CO_CD											/*카드회사*/
+								,FST_REG_DT											/*최초등록일자*/
+								,FST_USER_ID										/*최초등록자*/
+								,LST_UPD_DT											/*최종수정일자*/
+								,LST_UPD_ID											/*최종수정자*/
+								,ORG_SHOP_CD										/*원매장코드*/
+								,ORG_SAL_DT											/*원판매일자*/
+								,ORG_SAL_NO)										/*원판매번호*/
+						VALUES (#{prt_cd}											/*매장코드*/
+							,TO_CHAR(SYSDATE, 'YYYYMMDD')							/*판매일자*/
+							,#{sal_no}												/*selectKey로 자동 생성*/												
+							,#{sal_tp_cd}											/*판매구분코드*/									
+							,#{tot_sal_qty}											/*총판매수량*/
+							,#{tot_sal_amt}											/*총판매금액*/
+							,#{tot_vos_amt}											/*총공급가액*/
+							,#{tot_vat_amt}											/*총부가세액*/
+							,#{csh_stlm_amt}										/*현금결제금액*/
+							,#{crd_stlm_amt}										/*카드결제금액*/
+							,#{pnt_stlm_amt}										/*포인트사용금액*/
+							,#{cust_no}												/*고객번호*/
+							,#{crd_no}												/*카드번호*/
+							,#{vld_ym}												/*유효년월*/
+							,#{crd_co_cd}											/*카드회사*/
+							,SYSDATE												/*지금 날짜*/
+							,#{user_id}												/*로그인 해 들어온 아이디*/
+							,SYSDATE												/*지금 날짜*/
+							,#{user_id} 											/*로그인 해 들어온 아이디*/
+							,#{org_shop_cd}											/*원매장코드*/
+							,#{org_sal_dt}											/*원판매일자*/
+							,#{org_sal_no})											/*원판매번호*/
+	</insert>  	  
+  	  
+  	  
+  	<!-- 2pg 판매등록 상세 CS_SAL01_DT TABLE INSERT -->
+	<!--primary key 인 일련번호를 자동 생성 하기 위해 select key 사용  -->
+	<insert id="insSalDt" parameterType="HashMap">
+		<selectKey keyProperty="sal_seq" order="BEFORE" resultType="int">
+			SELECT NVL(MAX(SAL_SEQ), 0) + 1 FROM CS_SAL01_DT WHERE PRT_CD = #{prt_cd} AND SAL_DT = TO_CHAR(SYSDATE, 'YYYYMMDD') AND SAL_NO = #{sal_no}
+		</selectKey>
+		INSERT INTO CS_SAL01_DT (PRT_CD												/*매장코드*/
+								,SAL_DT												/*판매일자*/
+								,SAL_NO												/*판매번호*/
+								,SAL_SEQ											/*판매일련번호*/
+								,PRD_CD												/*상품코드*/
+								,PRD_CSMR_UPR										/*소비자단가*/
+								,SAL_QTY											/*판매수량*/
+								,SAL_AMT											/*판매금액*/
+								,SAL_VOS_AMT										/*판매공급가액*/
+								,SAL_VAT_AMT										/*판매부가세액*/
+								,FST_REG_DT											/*최초등록일자*/
+								,FST_USER_ID										/*최초등록자*/
+								,LST_UPD_DT											/*최종수정일자*/
+								,LST_UPD_ID)										/*최종 수정자*/
+						VALUES (#{prt_cd}											/*매장코드*/
+							,TO_CHAR(SYSDATE, 'YYYYMMDD')							/*판매일자*/
+							,#{sal_no}												/*판매번호*/						
+							,#{sal_seq}												/*selectKey로 자동 생성*/
+							,#{prd_cd}												/*상품코드*/
+							,#{csmr_upr}											/*소비자단가*/
+							,#{sal_qty}												/*판매수량*/
+							,#{sal_amt}												/*판매금액*/
+							,#{vos_amt}												/*판매공급가액*/
+							,#{vat_amt}												/*판매부가세액*/
+							,SYSDATE												/*지금 날짜*/
+							,#{user_id}												/*로그인 해 들어온 아이디*/
+							,SYSDATE												/*지금 날짜*/
+							,#{user_id})											/*로그인 해 들어온 아이디*/
+	</insert>
+	
+	
+	 <!-- 2PG 3PG 판매/반품 재고 +- 처리 TABLE UPDATE -->
+	 <update id="updIvcoMt" parameterType="HashMap">
+		UPDATE SD_IVCO01_MT																	/*매장현재고 테이블*/
+		SET IVCO_QTY = (CASE WHEN #{sal_tp_cd} = 'SAL' THEN (IVCO_QTY - #{sal_qty})			/*재고 수량 판매구분코드가 SAL이면 재고수량에 -*/
+		                     ELSE (IVCO_QTY + #{sal_qty})									/*판매구분코드가 RTN이면 재고수량에 +*/
+		                END)
+		  , LST_UPD_DT = SYSDATE															/*최종 수정 날짜*/
+		  , LST_UPD_ID = #{user_id}															/*최종 수정 아이디 로그인 들어온 아이디*/
+		WHERE 1=1
+		 AND PRT_CD = #{prt_cd}																/*매장 코드*/
+		 AND PRD_CD = #{prd_cd}																/*상품 코드*/
+	 </update>
+	
+	
+	
+	
+    
+ </mapper>

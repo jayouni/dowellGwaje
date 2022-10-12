@@ -1,0 +1,945 @@
+@charset "UTF-8";
+
+
+
+.center{
+	text-align:center;
+}
+.left{
+	text-align:left;
+}
+.right{
+	text-align:right;
+}
+
+
+#logid{
+	
+	color:#ffa3f9;
+	
+}
+
+
+#header {
+	height: 64px;
+	padding-top:10px;
+	color: white;
+	background: #57b7fa;
+	font-weight: bold;
+	
+	justify-content: space-between;
+	align-items: center;
+}
+
+#menubar {
+	float: center;
+	padding: 0 50px;
+	margin-bottom: 30px;
+	border: 0px solid #bcbcbc;
+	background-color: white;
+}
+
+.login {
+	font-family: 'Gowun Dodum', sans-serif;
+	color: #2e2e2e;
+	text-decoration: none;
+	font-size: 20px;
+	text-align: right;
+	
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    background-color: #57b7fa;
+}
+ul:after{
+    content:'';
+    display: block;
+    clear:both;
+}
+li {
+    float: left;
+}
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+	
+#wrap {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  
+}
+
+#main_chang{
+
+	background-color: #292931;
+	background-image:url(https://miro.medium.com/max/1400/1*U-FxIADBFaC4c1StbbCSWA.jpeg);
+	background-size: cover;
+
+}
+
+#welcome{
+	font-size:40px;
+	font-style: normal;
+	margin-bottom: 10px;
+}
+
+#log_btn{
+	
+	margin-right:20px;
+}
+
+/* 1페이지 */
+.prt{
+	
+	width:130px;
+	
+}
+
+.prt_22{
+	width:130px;
+}
+
+#cust_no_dis{
+	
+	width:130px;
+}
+
+.gogek{
+	
+	margin-left:10px;
+	margin-right:10px;
+}
+
+#cust_no{
+	
+	width:130px;
+	
+}
+
+#jn_from{
+	width:125px;
+	margin-right:43px;
+}
+
+#jn_to{
+	
+	width:134px;
+}
+
+#refresh{
+	
+	width:40px;
+	height:30px;
+	
+}
+
+ #gogek{
+	
+	padding-right: 15px;
+	
+} 
+
+#custMod{
+	
+	text-decoration: none;
+	
+}
+
+#mainSearch{
+	margin-top:3px;
+}
+
+
+#sub_btn{
+
+	height:50px;
+	width:50px;
+
+}
+
+#search_shop{
+	
+	height:17px;
+	width:17px;
+
+
+}
+
+#search_cust{
+	
+	
+	height:17px;
+	width:17px;
+	
+
+}
+
+
+#first_table{
+	
+	width: 100%;
+	/* height:80px; */
+	border: 1px solid #00c8ff;
+	text-align:center;
+	margin-bottom:30px;
+
+}
+#first_tbl_tr{
+	
+	
+	width:1000px;
+	
+	
+}
+
+#first_table th{
+	
+	position: sticky;
+    top: 0px;
+    background-color:#8ae6ff;
+	
+	
+}
+
+
+#check_cust{
+	
+	width:100%;
+	border: 1px solid #5edcff;
+	background-color: #8ae6ff;
+}
+
+#newMem_btn{
+	
+	/* margin-left: 65%; */
+	float: right;
+}
+
+#sub_btn{
+
+	height:50px;
+	width:50px;
+
+}
+
+
+/* 2번 */
+
+i .redstar{
+	color:red;
+}
+
+#search_prt{
+	
+	height:17px;
+	width:17px;
+	
+}
+
+
+#go_div_1{
+	padding-top: 2px;
+    padding-left: 20px;
+	width:1500px;
+	background-color: #8ae6ff;
+	height:67px;
+	
+}
+#refresh2{
+	
+	width:37px;
+	height:25px;
+	
+}
+
+#go_gi_2{
+	
+	border:3px solid #00c8ff;
+	padding:5px;
+	padding-top:12px;
+	padding-bottom:14px;
+}
+
+#go_gi_2 td{
+	padding-top:4px;
+	padding-bottom:5px;
+	
+}
+
+#chong_tbl{
+	
+	border:3px solid #00c8ff;
+	padding:10px;
+	padding-right: 73px;
+	padding-top:6px;
+	padding-bottom:7px;
+}
+
+#pnt_tbl3{
+	
+	border:3px solid #00c8ff;
+	padding:10px;
+	padding-right: 27px;
+	padding-top:6px;
+	padding-bottom:7px;
+}
+#su_tbl{
+	
+	border:3px solid #00c8ff;
+	padding:10px;
+	padding-right: 128px;
+	padding-top:6px;
+	padding-bottom:7px;
+	
+	
+}
+
+#dat_tbl{
+	
+	float:right;
+	margin-top:10px;
+	margin-right:233px;
+}
+
+#cs_dat_2{
+	
+	width:150px;
+	height:25px;
+	
+}
+
+#updCust{
+	
+	width:150px;
+	height:25px;
+	
+}
+
+
+
+
+/* 3번 */
+
+
+ #sindiv{
+	
+	border:3px solid #00c8ff;
+	margin-top:10px;
+	
+} 
+
+#sintb{
+	margin-bottom:25px;
+}
+
+#sintb td{
+	
+	
+	padding-top:18px;
+	padding-bottom:5px;
+	
+	
+} 
+
+#su_to_div{
+	
+	border:3px solid #00c8ff;
+	margin-bottom:10px;
+}
+
+#su_to_tbl{
+	padding-top:25px;
+	padding-bottom:5px;
+	margin-bottom:25px;
+	
+}
+
+#n_dat_3{
+	
+	float:right;
+	margin-right:5px;
+}
+
+#sing_div{
+	
+	padding-top:15px;
+	padding-bottom:15px;
+	background-color:#59dbff;
+	
+}
+
+
+/* #prt_btn{
+	
+	
+	height:17px;
+	width:17px;
+	
+
+} */
+
+
+/* 4번 */
+#cust_nm{
+	margin-left:10px;
+	width:140px;
+	
+}
+#mbl_no{
+	margin-left:10px;
+	width:140px;
+	
+}
+
+
+#cust_sel_head{
+	background-color:#8ae6ff;
+}
+#sc_cust{
+	width:100%;
+	border: 1px solid #00c8ff;
+	background-color:#8ae6ff;
+	margin-bottom:30px;
+}
+
+#popup_cust{
+	width: 100%;
+	height: 500px;
+	
+}
+#sc_cust_rslt{
+	width: 100%;
+	height:30px;
+	text-align:center;
+	
+	
+}
+
+#sc_cust_rslt td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#sc_cust_rslt td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+
+#sc_cust_tr{
+	
+	background-color:#8ae6ff;
+}
+
+#sc_cust_rslt th{
+	background-color:#8ae6ff;
+	position: sticky;
+    top: 0px;
+	border: 1px solid #8ae6ff;
+	padding: 5px;
+} 
+
+
+
+
+#sub_btn4{
+
+	height:50px;
+	width:50px;
+
+}
+
+#sc_cust_tr{
+
+	border: 1px solid #5edcff;
+	background-color: #8ae6ff;
+
+}
+
+
+/* 5번 */
+
+#cust_nm_tbl{
+	width: 1000px;
+	height:80px;
+	border: 1px solid #00c8ff;
+	background-color:#8ae6ff;
+	/* position: sticky; */
+	margin-bottom: 30px;
+
+}
+
+#cust_dt_tbl{
+	width: 970px;
+	border: 1px solid #8ae6ff;
+	text-align:center;
+
+}
+
+
+#cust_tbl{
+ 	width: 980px;
+	
+}
+
+#cust_dt_tr{
+	
+	background-color:#8ae6ff;
+
+}
+#cust_tbl td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#cust_tbl td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+
+
+#cust_tbl th{
+	
+	position: sticky;
+    top: 0px;
+	background-color:#8ae6ff;
+	opacity:1;
+	border: 1px solid #00c8ff;
+	padding: 5px;
+
+}
+
+#cust_tr{
+	background-color:#8ae6ff;
+	
+} 
+
+#btn5_div{
+	color:#8ae6ff;
+
+}
+
+#close55{
+	
+	width:70px;
+	height:30px;
+	float:right;
+	
+	
+}
+
+/* #cust_nm_tbl{
+	
+	position:fixed;
+} */
+
+
+/*6번*/
+
+#sch_shop{
+	width:800px;
+	border: 1px solid #00c8ff;
+	background-color:#8ae6ff;
+	margin-bottom:30px;
+	
+}
+
+
+
+
+
+
+
+
+#popup_shp{
+	width: 800px;
+	
+}
+
+
+
+#shp_sel{
+
+	width: 100%;
+	/* height:400px; */
+    /* border-collapse: collapse; */
+    border-spacing:0px;
+	/* border: 1px solid #8ae6ff; */
+	text-align:center;
+
+}
+
+
+/* #sch_shop_body{
+	
+	border: 1px solid #8ae6ff;
+	
+} */
+
+
+#shp_sel th{
+	
+	background-color:#8ae6ff;
+	position: sticky;
+    top: 0px;
+    border: 1px solid #8ae6ff;
+    padding: 5px;
+}
+
+#shp_sel td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#shp_sel td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+/* #shp_sel_tr{
+	
+	background-color:#8ae6ff;
+}
+
+#shp_sel_tr th{
+	
+	border: 1px solid #8ae6ff;
+	background-color:#8ae6ff;
+} */
+
+#sch_td{
+	
+	padding:20px;
+	margin-right:30px;
+
+}
+.in_6{
+	width:140px;
+	margin-left:40px;
+	
+	
+	
+}
+
+
+#shp_sel_head{
+	
+	background-color:#8ae6ff;
+	
+}
+
+#sub_btn6{
+
+	height:50px;
+	width:50px;
+
+}
+
+
+/* 7번 */
+
+
+#mae_tbl{
+	width: 100%;
+	height:70px;
+	border: 1px solid #00c8ff;
+	background-color:#8ae6ff;
+	margin-bottom:30px;
+
+
+}
+
+#mae_tbl2{
+	width: 100%;
+	
+}
+#mae_tbl2 th{
+	padding: 8px 5px;
+	border-left: 1px solid #00c8ff;
+}
+
+#mae_tbl2 td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#mae_tbl2 td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+#wol{
+	margin-left:20px;
+	width:140px;
+	
+}
+#mae_tbl_tr{
+
+	background-color:#8ae6ff;
+
+}
+#sub_btn7{
+
+	height:50px;
+	width:50px;
+	
+
+}
+
+.prt_1{
+	margin-left:10px;
+	width:150px;
+}
+
+.in_7{
+	margin-left:30px;
+	margin-right:10px;
+	width:140px;
+}
+#search_shop7{
+	
+	width:15px;
+	height:15px;
+	
+	
+}
+
+/* 수금 2 */
+#pansu_tbl{
+	
+	width: 100%;
+    border: 1px solid #00c8ff;
+    background-color: #8ae6ff;
+    margin-bottom:3px;
+    
+}
+
+#gel_tbl{
+	
+	border:1px solid #00c8ff;
+	padding:5px;
+	padding-top:10px;
+	padding-bottom:14px;
+	
+}
+
+
+#pmBtn{
+	float:right;
+	
+}
+
+
+
+#su_div2{
+	width: 100%;
+	height: 500px;
+	
+}
+
+
+#su_tbl2{
+	width: 100%;
+	height:30px;
+	text-align:center;
+	
+	
+}
+
+#su_tbl2 td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#su_tbl2 td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+
+#su_tbl2 th{
+	background-color:#8ae6ff;
+	position: sticky;
+    top: 0px;
+	border: 1px solid #8ae6ff;
+	padding: 5px;
+} 
+
+
+
+#su_tbl3{
+	width: 100%;
+	height:30px;
+	text-align:center;
+	
+	
+}
+
+#su_tbl3 td{
+	border-top: 1px solid #00c8ff;
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#su_tbl3 td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+
+#su_tbl3 th{
+	background-color:#8ae6ff;
+	position: sticky;
+    top: 0px;
+	border: 1px solid #8ae6ff;
+	padding: 5px;
+} 
+
+
+
+#su_tr2{
+
+	border: 1px solid #5edcff;
+	background-color: #8ae6ff;
+
+}
+
+
+
+
+
+/* 판매상세 3 */
+
+
+#maeca_tbl{
+	width: 980px;
+	height:80px;
+	border: 1px solid #00c8ff;
+	background-color:#8ae6ff;
+	/* position: sticky; */
+	margin-bottom: 30px;
+
+}
+
+
+#banpumBtn{
+	width:80px;
+	height:40px;
+	float:right;
+	
+}	
+
+#closeBtn{
+	width:80px;
+	height:40px;
+	float:right;
+	
+}	
+
+
+
+#mae_tbl3{
+ 	width: 980px;
+	
+}
+
+
+#mae_tbl3 td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#mae_tbl3 td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+
+
+#mae_tbl3 th{
+	
+	position: sticky;
+    top: 0px;
+	background-color:#8ae6ff;
+	opacity:1;
+	border: 1px solid #00c8ff;
+	padding: 5px;
+
+}
+
+#mae_tr3{
+	background-color:#8ae6ff;
+	
+} 
+
+
+
+
+
+/* 재고조회4 */
+
+
+#jego_tbl{
+	width:100%;
+	border: 1px solid #00c8ff;
+	background-color:#8ae6ff;
+	margin-bottom:30px;
+}
+
+
+#jego_div{
+	width: 100%;
+	height: 700px;
+	
+}
+
+
+
+
+#je_tbl{
+	width: 100%;
+	height:30px;
+    /* border-collapse: collapse; */
+	/* border: 1px solid #8ae6ff; */
+	text-align:center;
+	
+	
+}
+
+#je_tbl td{
+	border-right: 1px solid #00c8ff;
+	border-bottom: 1px solid #00c8ff;
+	padding: 8px 5px; 
+}
+#je_tbl td.border_left{
+	border-left: 1px solid #00c8ff;
+}
+
+
+#je_tbl th{
+	background-color:#8ae6ff;
+	position: sticky;
+    top: 0px;
+	border: 1px solid #8ae6ff;
+	padding: 5px;
+} 
+
+
+#je_tr{
+
+	border: 1px solid #5edcff;
+	background-color: #8ae6ff;
+
+}
+
+
+
+
+
+
+input.disabled {
+    user-select : none;
+    -moz-user-select : none;
+    -webkit-user-select : none;
+    cursor: default;
+    background-color: #EFEFEF4D;
+    border-color: rgba(118, 118, 118, 0.3);
+    /* background-color: #EFEFEF4D;
+    border-color: rgba(118, 118, 118, 0.3); */
+}

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+ 
+<tiles-definitions>
+	<!-- 메인 레이아웃 -->
+	<definition name="layout" template="/WEB-INF/views/tiles/tiles-layout.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/tiles/header.jsp" />
+		<put-attribute name="body" value="" />
+	</definition>
+	
+	
+	<definition name="/gwaje/" >
+		<put-attribute name="body" value="/WEB-INF/views/main.jsp" />
+		<put-attribute name="title" value="메인창" />
+	</definition>
+	
+	
+	<definition name="/search/totalCount" extends="layout">
+		<put-attribute name="body" value="/WEB-INF/views/shop/totalIncome7.jsp" />
+		<put-attribute name="title" value="매장실적" />
+	</definition>
+	
+	
+		
+	<definition name="/sale/panMain1" extends="layout">
+		<put-attribute name="body" value="/WEB-INF/views/sale/panme1.jsp" />
+		<put-attribute name="title" value="판매조회" />
+	</definition>
+	
+			
+	<definition name="/sale/sugumPop2" >
+		<put-attribute name="body" value="/WEB-INF/views/sale/sugum2.jsp" />
+		<put-attribute name="title" value="판매수금팝업" />
+	</definition>
+	
+				
+	<definition name="/sale/sangsePop3" >
+		<put-attribute name="body" value="/WEB-INF/views/sale/sangse3.jsp" />
+		<put-attribute name="title" value="판매상세팝업" />
+	</definition>
+	
+					
+	<definition name="/sale/jegoPop4" >
+		<put-attribute name="body" value="/WEB-INF/views/sale/jego4.jsp" />
+		<put-attribute name="title" value="매장재고조회" />
+	</definition>
+	
+	
+	
+		
+	<definition name="/member/main" extends="layout">
+		<put-attribute name="body" value="/WEB-INF/views/member/mainCheck1.jsp" />
+		<put-attribute name="title" value="메인조회" />
+	</definition>
+
+ 	<definition name="/search/toCustModJsp" extends="layout">
+		<put-attribute name="body" value="/WEB-INF/views/customer/custMod2.jsp" />
+		<put-attribute name="title" value="고객정보조회" />
+	</definition> 
+
+	<definition name="/search/newcust" >
+		<put-attribute name="body" value="/WEB-INF/views/customer/newCust3.jsp" />
+		<put-attribute name="title" value="신규고객팝업" />
+	</definition>
+	
+	<definition name="/search/customer" >
+		<put-attribute name="body" value="/WEB-INF/views/customer/searchCust4.jsp" />
+		<put-attribute name="title" value="고객조회팝업" />
+	</definition>
+	
+	<definition name="/search/custdetail" >
+		<put-attribute name="body" value="/WEB-INF/views/customer/custDetail5.jsp" />
+		<put-attribute name="title" value="고객이력팝업" />
+	</definition>
+	
+	<definition name="/search/searchshop" >
+		<put-attribute name="body" value="/WEB-INF/views/shop/searchShop6.jsp" />
+		<put-attribute name="title" value="매장조회팝업" />
+	</definition>
+	
+	
+	<definition name="/member/logfail" extends="layout">
+		<put-attribute name="body" value="/WEB-INF/views/member/logFail.jsp" />
+		<put-attribute name="title" value="로그인실패" />
+	</definition>
+	
+
+	
+	
+	
+
+</tiles-definitions>
