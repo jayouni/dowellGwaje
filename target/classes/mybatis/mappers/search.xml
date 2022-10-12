@@ -856,9 +856,11 @@
 			        AND TO_DATE(#{sal_to}, 'YYYY-MM-DD')
 			 AND SAL.PRT_CD = #{prt_cd}																	/*매장코드*/
 			 
+			 
 			<if test='cust_no_dis != "" '>
 			    AND CUST.CUST_NO = #{cust_no_dis}														/*고객 번호*/
 			</if>
+			
 			
 			GROUP BY SAL.SAL_DT																			/*판매 일자*/
 			       , SAL.CUST_NO																		/*고객 번호*/
@@ -874,7 +876,7 @@
 			       , SAL.CSH_STLM_AMT																	/*현금 결제금액*/
                    , SAL.CRD_STLM_AMT																	/*카드 결제금액*/
                    , SAL.PNT_STLM_AMT																	/*현금 결제금액*/
-			ORDER BY SAL.SAL_DT ASC																		/*판매 일자*/
+			ORDER BY SAL.SAL_DT DESC																	/*판매 일자*/
 			       , SAL.SAL_NO																			/*판매 번호*/
 
     	
@@ -956,7 +958,7 @@
 				ON SD.PRT_CD = PM.PRT_CD				/*매장현재고 매장코드와 거래처관리 매장코드가 같은 곳*/
 				WHERE 1=1
 				
-				<if test='prd_tp_20_dif == "Y"'>
+				<if test='prd_tp_20_dif == "Y"'>		/*4pg에서 견본품이 나오지 않도록 하기 위해*/
 				AND MA.PRD_TP_CD != '20'
 				</if>
 				

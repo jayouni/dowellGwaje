@@ -432,7 +432,7 @@ request.setCharacterEncoding("UTF-8");
 					
 					//매장 없을때
 					if(ptcd == ''){
-						alert("가입 매장이 비어있습니다.")
+						alert("가입 매장매장매장var se_user_dt_cd = $("#se_user_dt_cd").val(); var se_user_dt_cd = $("#se_user_dt_cd").val(); var se_user_dt_cd = $("#se_user_dt_cd").val(); var se_user_dt_cd = $("#se_user_dt_cd").val(); var se_user_dt_cd = $("#se_user_dt_cd").val(); ar sal_to ar sal_to ar sal_to ar sal_to = $("ar sal_to = $("vvvssvvvss이 비어있습니다.")
 						$("#prt_cd_nm").focus();
 						return false;
 					}

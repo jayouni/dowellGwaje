@@ -159,17 +159,12 @@ public class MemContoller {
 	@RequestMapping(value = "/search/custmod222", method = RequestMethod.POST)
 	public String cust222(ModelAndView mav, @RequestParam Map<String, Object> map) throws Exception {
 		
-//		List<Map<String, String>> custList = memService.custMod2(map);
 		
 		System.out.println("map : " + map);
 		Map custMap = memService.getCustInfo(map);
 		System.out.println("custMap : " + custMap);
 		
-//		JSONArray jsonArr = new JSONArray();
 
-//		if (custList != null && custList.size() > 0) {
-
-//			for (Map<String, String> custMap : custList) {
 
 				JSONObject jsonObj = new JSONObject();
 				try {
@@ -216,10 +211,7 @@ public class MemContoller {
 					e.printStackTrace();
 				}
 
-//				jsonArr.put(jsonObj);
 
-//			}
-//		}
 		System.out.println("jsonObj.toString() : " + jsonObj.toString());
 		return jsonObj.toString();
 	}
@@ -279,6 +271,8 @@ public class MemContoller {
 	}
 	
 	
+	
+	
 	//판매 메인 1번 보내는 mav 
 	@RequestMapping(value = "/sale/panMain", method = RequestMethod.GET)
 	public ModelAndView panMain1(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -307,7 +301,6 @@ public class MemContoller {
 
 		return mav;
 	}
-	
 	
 	
 	
@@ -360,11 +353,6 @@ public class MemContoller {
 	}
 	
 	
-
-
-
-	
-	
 	
 	
 	
@@ -377,6 +365,107 @@ public class MemContoller {
 
 		return mav;
 	}
+	
+	
+	
+	
+	//판매 2pg 판매등록처리
+	@ResponseBody
+	@RequestMapping(value = "/search/newSal88", produces = "text/plain;charset=UTF-8")
+	public String newSal88(ModelAndView mav, @RequestParam Map<String, Object> map, HttpServletRequest request) {
+	
+		HttpSession session = request.getSession();
+		MemberVO memberVO = (MemberVO) session.getAttribute("member");
+		
+		System.out.println("map : " + map);
+		
+		Map<String, Object> salMtMap = net.sf.json.JSONObject.fromObject(map.get("salMtMap"));
+		salMtMap.put("user_id", memberVO.getUser_id());
+		
+		System.out.println("salMtMap : " + salMtMap);
+		
+		JSONObject jsonObj = new JSONObject();
+		try {
+			//판매등록 마스터처리
+			String rst = memService.newSalMt(salMtMap);
+			System.out.println("salMt rst : " + rst);
+			if(rst.equals("1")) {
+				List<Map<String, Object>> salDtList = net.sf.json.JSONArray.fromObject(map.get("salDtList"));
+				System.out.println("salDtList.size() : " + salDtList.size());
+				for (int i = 0; i < salDtList.size(); i++) {
+					Map<String, Object> salDtMap = salDtList.get(i);
+					
+					salDtMap.put("sal_no", salMtMap.get("sal_no"));
+					salDtMap.put("sal_tp_cd", salMtMap.get("sal_tp_cd"));
+					salDtMap.put("user_id", memberVO.getUser_id());
+					System.out.println("salDtMap : " + salDtMap);
+					
+					//판매등록 상세처리
+					rst = memService.newSalDt(salDtMap);
+					System.out.println("salDt rst : " + rst);
+					if(rst.equals("1")) {
+						//판매등록 재고처리
+						rst = memService.updIvcoMt(salDtMap);
+						System.out.println("ivcoMt rst : " + rst);
+						if(!rst.equals("1")) {
+							rst = (i+1) + "번째 판매등록 재고처리 중 실패";
+							break;
+						}
+					} else {
+						rst = (i+1) + "번째 판매등록 상세처리 중 실패";
+						break;
+					}
+				}
+				
+				List<Map<String, Object>> pntList = net.sf.json.JSONArray.fromObject(map.get("pntList"));
+				System.out.println("pntList.size() : " + pntList.size());
+				for (int i = 0; i < pntList.size(); i++) {
+					Map<String, Object> pntMap = pntList.get(i);
+					
+					pntMap.put("user_id", memberVO.getUser_id());
+					System.out.println("pntMap : " + pntMap);
+					
+					//판매등록 포인트처리
+					int pnt = Integer.parseInt(String.valueOf(pntMap.get("pnt")));
+					if(rst.equals("1") && pnt > 0) {
+						//포인트 디테일 테이블에 넣기
+						rst = memService.newCustPntD(pntMap);
+						System.out.println("pntDt rst : " + rst);
+						if(rst.equals("1")) {
+							System.out.println("pntMap : " + pntMap);
+							//포인트 마스터 테이블에 더해주기
+							rst = memService.newCustPntM(pntMap);
+							System.out.println("pntMt rst : " + rst);
+							if(!rst.equals("1")) {
+								rst = "판매등록 포인트마스터처리 중 실패";
+							}
+						} else {
+							rst = "판매등록 포인트상세처리 중 실패";
+						}
+					}
+				}
+				
+			} else {
+				rst = "판매등록 마스터처리 중 실패";
+			}
+			
+			System.out.println("return rst : " + rst);
+			jsonObj.put("rst", rst);
+
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+		return jsonObj.toString();
+		
+	}
+	
+
+	
+	
+	
 	
 	//판매 상세 3번 팝업  mav 
 	@RequestMapping(value = "/sale/sangsePopup", method = RequestMethod.POST)
@@ -415,7 +504,9 @@ public class MemContoller {
 	}
 	
 	
-	//3 판매 상세 조회
+	
+	
+	//판매 3pg 상세 조회
 	@ResponseBody
 	@RequestMapping(value = "/search/panSangse", produces = "text/plain;charset=UTF-8")
 	public String panSangJo(ModelAndView mav, @RequestParam Map<String, Object> map) {
@@ -451,7 +542,8 @@ public class MemContoller {
 	
 	
 	
-	//3pg 팝업 반품
+	
+	//판매 3pg 팝업 반품
 	@ResponseBody
 	@RequestMapping(value = "/search/banPum", produces = "text/plain;charset=UTF-8")
 	public String banPum(ModelAndView mav, @RequestParam Map<String, Object> map, HttpServletRequest request) {
@@ -547,6 +639,8 @@ public class MemContoller {
 	
 	
 	
+	
+	
 	//판매 재고 4번 팝업  mav 
 	@RequestMapping(value = "/sale/jegoPopup", method = RequestMethod.POST)
 	public ModelAndView jegoPop4(HttpServletRequest request, HttpServletResponse response, @RequestParam Map<String, Object> map) throws Exception {
@@ -564,7 +658,7 @@ public class MemContoller {
 	
 	
 	
-	//4 상품 재고 조회
+	//판매 4pg 상품 재고 조회
 	@ResponseBody
 	@RequestMapping(value = "/search/jegoJo", produces = "text/plain;charset=UTF-8")
 	public String jegoJo(ModelAndView mav, @RequestParam Map<String, Object> map) {
@@ -600,6 +694,8 @@ public class MemContoller {
 	}
 
 
+	
+	
 	
 		//1번 페이지 조회 
 		@ResponseBody
@@ -699,7 +795,6 @@ public class MemContoller {
 		}
 	
 	
-		
 		
 		
 		
@@ -876,10 +971,7 @@ public class MemContoller {
 		
 			
 	
-		
-		
-		
-		
+	
 
 		
 	
@@ -916,9 +1008,6 @@ public class MemContoller {
 	
 		
 	
-	
-	
-		
 		
 	
 	
@@ -952,7 +1041,7 @@ public class MemContoller {
 	}
 	
 	
-	
+
 	
 	
 	
@@ -1024,103 +1113,6 @@ public class MemContoller {
 	}
 		
 	
-		//4pg 판매등록처리
-		@ResponseBody
-		@RequestMapping(value = "/search/newSal88", produces = "text/plain;charset=UTF-8")
-		public String newSal88(ModelAndView mav, @RequestParam Map<String, Object> map, HttpServletRequest request) {
-		
-			HttpSession session = request.getSession();
-			MemberVO memberVO = (MemberVO) session.getAttribute("member");
-			
-			System.out.println("map : " + map);
-			
-			Map<String, Object> salMtMap = net.sf.json.JSONObject.fromObject(map.get("salMtMap"));
-			salMtMap.put("user_id", memberVO.getUser_id());
-			
-			System.out.println("salMtMap : " + salMtMap);
-			
-			JSONObject jsonObj = new JSONObject();
-			try {
-				//판매등록 마스터처리
-				String rst = memService.newSalMt(salMtMap);
-				System.out.println("salMt rst : " + rst);
-				if(rst.equals("1")) {
-					List<Map<String, Object>> salDtList = net.sf.json.JSONArray.fromObject(map.get("salDtList"));
-					System.out.println("salDtList.size() : " + salDtList.size());
-					for (int i = 0; i < salDtList.size(); i++) {
-						Map<String, Object> salDtMap = salDtList.get(i);
-						
-						salDtMap.put("sal_no", salMtMap.get("sal_no"));
-						salDtMap.put("sal_tp_cd", salMtMap.get("sal_tp_cd"));
-						salDtMap.put("user_id", memberVO.getUser_id());
-						System.out.println("salDtMap : " + salDtMap);
-						
-						//판매등록 상세처리
-						rst = memService.newSalDt(salDtMap);
-						System.out.println("salDt rst : " + rst);
-						if(rst.equals("1")) {
-							//판매등록 제고처리
-							rst = memService.updIvcoMt(salDtMap);
-							System.out.println("ivcoMt rst : " + rst);
-							if(!rst.equals("1")) {
-								rst = (i+1) + "번째 판매등록 재고처리 중 실패";
-								break;
-							}
-						} else {
-							rst = (i+1) + "번째 판매등록 상세처리 중 실패";
-							break;
-						}
-					}
-					
-					List<Map<String, Object>> pntList = net.sf.json.JSONArray.fromObject(map.get("pntList"));
-					System.out.println("pntList.size() : " + pntList.size());
-					for (int i = 0; i < pntList.size(); i++) {
-						Map<String, Object> pntMap = pntList.get(i);
-						
-						pntMap.put("user_id", memberVO.getUser_id());
-						System.out.println("pntMap : " + pntMap);
-						
-						//판매등록 포인트처리
-						int pnt = Integer.parseInt(String.valueOf(pntMap.get("pnt")));
-						if(rst.equals("1") && pnt > 0) {
-							//포인트 디테일 테이블에 넣기
-							rst = memService.newCustPntD(pntMap);
-							System.out.println("pntDt rst : " + rst);
-							if(rst.equals("1")) {
-								System.out.println("pntMap : " + pntMap);
-								//포인트 마스터 테이블에 더해주기
-								rst = memService.newCustPntM(pntMap);
-								System.out.println("pntMt rst : " + rst);
-								if(!rst.equals("1")) {
-									rst = "판매등록 포인트마스터처리 중 실패";
-								}
-							} else {
-								rst = "판매등록 포인트상세처리 중 실패";
-							}
-						}
-					}
-					
-				} else {
-					rst = "판매등록 마스터처리 중 실패";
-				}
-				
-				System.out.println("return rst : " + rst);
-				jsonObj.put("rst", rst);
-
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			
-			return jsonObj.toString();
-			
-		}
-		
-	
-	
-		
-
 			
 			
 
