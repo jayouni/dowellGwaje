@@ -1081,6 +1081,27 @@ request.setCharacterEncoding("UTF-8");
 	    			$('#crd_no4').focus();
 	    			return true;
 	    		}
+	    		
+	    		if(crd1.length < 4){
+	    			alert('첫 번째 카드번호칸 필수 4자리 입니다.');
+	    			$('#crd_no1').focus();
+	    			return true;
+	    		}
+	    		if(crd2.length < 4){
+	    			alert('두 번째 카드번호칸 필수 4자리 입니다.');
+	    			$('#crd_no2').focus();
+	    			return true;
+	    		}
+	    		if(crd3.length < 4){
+	    			alert('세 번째 카드번호칸 필수 4자리 입니다.');
+	    			$('#crd_no3').focus();
+	    			return true;
+	    		}
+	    		if(crd4.length < 4){
+	    			alert('네 번째 카드번호칸 필수 4자리 입니다.');
+	    			$('#crd_no4').focus();
+	    			return true;
+	    		}
 
 	    	}
 	    	

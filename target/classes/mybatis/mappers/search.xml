@@ -585,36 +585,32 @@
 
 
     
+	    
+	    <!-- 6 페이지 테이블 불러오기 매장 조회-->
+	   	<resultMap type="HashMap" id="searchShop">
+		<result property="PRT_CD" 		column="PRT_CD" 		javaType="String" />
+		<result property="PRT_NM" 		column="PRT_NM" 		javaType="String" />
+		<result property="PRT_DT_CD" 	column="PRT_DT_CD" 		javaType="String" />
+		<result property="PRT_SS_CD" 	column="PRT_SS_CD" 		javaType="String" />
+		</resultMap>
+	    <select id="sixTable" resultMap="searchShop" parameterType="HashMap">
+	    <![CDATA[
+										
+			 SELECT M.PRT_CD										/*거래처 코드*/
+			,M.PRT_NM												/*거래처 이름*/
+			,M.PRT_DT_CD											/*거래처 구분 코드*/
+	        ,D.DTL_CD_NM AS PRT_SS_CD								/*PRT_SS_CD 로 명명 */
+			FROM MA_PRT_MT  M
+	        LEFT OUTER JOIN MA_CODE_DT D							/*코드 테이블 가져오기*/
+			ON D.CODE_CD = 'PRT_SS_CD' AND M.PRT_SS_CD = D.DTL_CD	/* MA_PRT_MT 테이블에서 가져온다*/         									
+			WHERE M.PRT_DT_CD = '2'                   				/* 거래처 상태코드가 2 이면*/        									
+			  AND ( PRT_CD LIKE '%' || #{in_prt} || '%'    			/*거래처 코드가 들어온 값과 부분일치하거나*/         						
+			   OR   PRT_NM LIKE '%' || #{in_prt} || '%' )    		/*거래처 이름이 들어온 값과 부분 일치할때*/       						
+			ORDER BY M.PRT_CD ASC									/*PRT_CD 오름차순 정렬*/
+			
+	    	]]>
+	    </select>
     
-    <!-- 6 페이지 테이블 불러오기 매장 조회-->
-   	<resultMap type="HashMap" id="searchShop">
-	<result property="PRT_CD" 		column="PRT_CD" 		javaType="String" />
-	<result property="PRT_NM" 		column="PRT_NM" 		javaType="String" />
-	<result property="PRT_DT_CD" 	column="PRT_DT_CD" 		javaType="String" />
-	<result property="PRT_SS_CD" 	column="PRT_SS_CD" 		javaType="String" />
-	</resultMap>
-    <select id="sixTable" resultMap="searchShop" parameterType="HashMap">
-    <![CDATA[
-									
-		 SELECT M.PRT_CD										/*거래처 코드*/
-		,M.PRT_NM												/*거래처 이름*/
-		,M.PRT_DT_CD											/*거래처 구분 코드*/
-        ,D.DTL_CD_NM AS PRT_SS_CD								/*PRT_SS_CD 로 명명 */
-		FROM MA_PRT_MT  M
-        LEFT OUTER JOIN MA_CODE_DT D							/*코드 테이블 가져오기*/
-		ON D.CODE_CD = 'PRT_SS_CD' AND M.PRT_SS_CD = D.DTL_CD	/* MA_PRT_MT 테이블에서 가져온다*/         									
-		WHERE M.PRT_DT_CD = '2'                   				/* 거래처 상태코드가 2 이면*/        									
-		  AND ( PRT_CD LIKE '%' || #{in_prt} || '%'    			/*거래처 코드가 들어온 값과 부분일치하거나*/         						
-		   OR   PRT_NM LIKE '%' || #{in_prt} || '%' )    		/*거래처 이름이 들어온 값과 부분 일치할때*/       						
-		ORDER BY M.PRT_CD ASC									/*PRT_CD 오름차순 정렬*/
-		
-    	]]>
-    </select>
-    
-    
-
-
-
 
 
     
@@ -658,15 +654,10 @@
 		<result property="TOT_SAL_QTY" 	column="TOT_SAL_QTY" 	javaType="String" />
 		</resultMap>
     
-    
-    
-    
-    
         
- <!--    7번 테이블 -->
-    
+ 	 <!--    7번 테이블 -->
      <select id="totalTable" resultMap="getTotalTable" parameterType="HashMap">
-			/* 'sal' 이면 양수 아니면 -1을 곱해 음수로 만든다 다른 값이라면 0 */
+			/* 'SAL' 이면 양수 아니면 'RTN' 이면 -1을 곱해 음수로 만든다 다른 값이라면 0 */
 			/*01-31 일까지의 값을 만들어 준다*/
 			
 	
@@ -795,9 +786,8 @@
 	   <result property="FST_REG_DT" 	column="FST_REG_DT" 	javaType="String" />
 	</resultMap>
 	
-	
 	  <select id="panMainTable" resultMap="panmeMain" parameterType="HashMap">
-	  		/*상품 상태 알기 위해 작성*/
+	  		/*상품 상태 반품인지 아닌지 알기 위해 작성*/
 			WITH RTN AS (
 					SELECT SAL.PRT_CD																	/*매장 코드*/
 					     , SAL.SAL_DT																	/*판매 일자*/
@@ -882,109 +872,18 @@
     	
   	  </select>
   	  
-  	  
-  	 
-  	 <!-- 판매 3번pg 상세 리스트  --> 
-  	 <resultMap type="HashMap" id="panSang">
-   	   <result property="PRD_CD" 		column="PRD_CD" 		javaType="String" />
-   	   <result property="PRD_NM" 		column="PRD_NM" 		javaType="String" />
-   	   <result property="SAL_QTY" 		column="SAL_QTY" 		javaType="String" />
-	   <result property="SAL_VOS_AMT" 	column="SAL_VOS_AMT" 	javaType="String" />
-	   <result property="SAL_VAT_AMT" 	column="SAL_VAT_AMT" 	javaType="String" />
-	   <result property="SAL_AMT" 		column="SAL_AMT" 		javaType="String" />
-	</resultMap>
-	
-	
-	  <select id="panSangTable" resultMap="panSang" parameterType="HashMap">
-    	
-		       	SELECT D.PRD_CD								/*매장 코드*/
-			         , P.PRD_NM								/*상품명*/
-			         , D.SAL_QTY							/*판매수량*/
-			         , D.SAL_VOS_AMT						/*판매공급가액*/
-			         , D.SAL_VAT_AMT						/*판매부가세액*/
-			         , D.SAL_AMT							/*판매금액*/
-			         , D.PRD_CSMR_UPR						/*소비자단가*/
-			    FROM
-			    CS_SAL01_DT D								/*고객판매상세 테이블*/
-			    INNER JOIN
-			    CS_SAL01_MT M								/*고객판매 테이블*/
-			    ON D.PRT_CD = M.PRT_CD						/*매장코드와*/
-			    AND D.SAL_DT = M.SAL_DT						/*판매 일자*/
-			    AND D.SAL_NO = M.SAL_NO						/*판매번호가 일치 하는 곳*/
-			    
-			    INNER JOIN
-			    MA_PRD01_MT P								/*상품관리 테이블*/
-			    ON D.PRD_CD = P.PRD_CD						/*상품 코드가 일치 하는곳*/
-			    WHERE 1=1
-			    AND D.PRT_CD = #{prt_cd}
-			    AND M.CUST_NO = #{cust_no}
-			    AND D.SAL_DT = #{sal_dt}
-			    AND D.SAL_NO = #{sal_no}
 
-    	
-  	  </select>
-	
-	
-	
-	
-	 <!-- 판매 4번pg 재고 리스트  --> 
-  	 <resultMap type="HashMap" id="jegoList">
-   	   <result property="PRD_CD" 		column="PRD_CD" 		javaType="String" />
-   	   <result property="PRD_NM" 		column="PRD_NM" 		javaType="String" />
-   	   <result property="IVCO_QTY" 		column="IVCO_QTY" 		javaType="String" />
-	   <result property="PRD_CSMR_UPR" 	column="PRD_CSMR_UPR" 	javaType="String" />
-	   <result property="PRD_TP_CD" 	column="PRD_TP_CD" 		javaType="String" />
-	   <result property="PRD_SS_CD" 	column="PRD_SS_CD" 		javaType="String" />
-	</resultMap>
-	
-	
-	  <select id="jegoTable" resultMap="jegoList" parameterType="HashMap">
-    	
-				
-				SELECT SD.PRT_CD						/*매장 명*/
-				     , SD.PRD_CD						/*상품 코드*/
-				     , MA.PRD_NM						/*상품 명*/
-				     , SD.IVCO_QTY						/*재고 수량*/
-				     , MA.PRD_TP_CD						/*상품 유형 코드*/
-				     , MA.PRD_SS_CD						/*상품 상태 코드*/
-				     ,TRIM(TO_CHAR(MA.PRD_CSMR_UPR, '999,999,999,999,999')) AS PRD_CSMR_UPR    /*소비자가*/
-				     
-				FROM SD_IVCO01_MT SD					/*매장현재고 테이블*/
-				LEFT OUTER JOIN							
-				MA_PRD01_MT MA							/*상품관리 테이블*/
-				ON SD.PRD_CD = MA.PRD_CD
-				INNER JOIN
-				MA_PRT_MT PM							/*거래처관리 테이블*/
-				ON SD.PRT_CD = PM.PRT_CD				/*매장현재고 매장코드와 거래처관리 매장코드가 같은 곳*/
-				WHERE 1=1
-				
-				<if test='prd_tp_20_dif == "Y"'>		/*4pg에서 견본품이 나오지 않도록 하기 위해*/
-				AND MA.PRD_TP_CD != '20'
-				</if>
-				
-				<if test='prt_cd != ""'>
-				AND SD.PRT_CD = #{prt_cd}
-				</if>
-				
-				<if test='prd_nm != ""'>
-				AND ( SD.PRD_CD LIKE '%' || #{prd_nm} || '%' OR  MA.PRD_NM LIKE '%' || #{prd_nm} || '%' )
-				</if>
-				
-				ORDER BY PRD_CD DESC
-
-    	
-    	
-    	
-  	  </select>
 
 
 
   	<!-- 2pg 판매등록 CS_SAL01_MT TABLE INSERT -->
-	<!--primary key 인 일련번호를 자동 생성 하기 위해 select key 사용  -->
+	<!--primary key 인 판매번호를 자동 생성 하기 위해 select key 사용  -->
 	<insert id="insSalMt" parameterType="HashMap">
+	
 		<selectKey keyProperty="sal_no" order="BEFORE" resultType="int">
 			SELECT NVL(MAX(SAL_NO), 0) + 1 FROM CS_SAL01_MT WHERE PRT_CD = #{prt_cd} AND SAL_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')
 		</selectKey>
+		
 		INSERT INTO CS_SAL01_MT (PRT_CD											    /*매장코드*/
 								,SAL_DT											    /*판매일자*/
 								,SAL_NO											    /*판매번호*/
@@ -1029,15 +928,21 @@
 							,#{org_shop_cd}											/*원매장코드*/
 							,#{org_sal_dt}											/*원판매일자*/
 							,#{org_sal_no})											/*원판매번호*/
+							
 	</insert>  	  
   	  
   	  
+  	  
+  	  
+  	  
   	<!-- 2pg 판매등록 상세 CS_SAL01_DT TABLE INSERT -->
-	<!--primary key 인 일련번호를 자동 생성 하기 위해 select key 사용  -->
+	<!--primary key 인 판매일련번호를 자동 생성 하기 위해 select key 사용  -->
 	<insert id="insSalDt" parameterType="HashMap">
+	
 		<selectKey keyProperty="sal_seq" order="BEFORE" resultType="int">
 			SELECT NVL(MAX(SAL_SEQ), 0) + 1 FROM CS_SAL01_DT WHERE PRT_CD = #{prt_cd} AND SAL_DT = TO_CHAR(SYSDATE, 'YYYYMMDD') AND SAL_NO = #{sal_no}
 		</selectKey>
+		
 		INSERT INTO CS_SAL01_DT (PRT_CD												/*매장코드*/
 								,SAL_DT												/*판매일자*/
 								,SAL_NO												/*판매번호*/
@@ -1066,11 +971,16 @@
 							,#{user_id}												/*로그인 해 들어온 아이디*/
 							,SYSDATE												/*지금 날짜*/
 							,#{user_id})											/*로그인 해 들어온 아이디*/
+							
+							
 	</insert>
+	
+	
 	
 	
 	 <!-- 2PG 3PG 판매/반품 재고 +- 처리 TABLE UPDATE -->
 	 <update id="updIvcoMt" parameterType="HashMap">
+	 
 		UPDATE SD_IVCO01_MT																	/*매장현재고 테이블*/
 		SET IVCO_QTY = (CASE WHEN #{sal_tp_cd} = 'SAL' THEN (IVCO_QTY - #{sal_qty})			/*재고 수량 판매구분코드가 SAL이면 재고수량에 -*/
 		                     ELSE (IVCO_QTY + #{sal_qty})									/*판매구분코드가 RTN이면 재고수량에 +*/
@@ -1080,10 +990,103 @@
 		WHERE 1=1
 		 AND PRT_CD = #{prt_cd}																/*매장 코드*/
 		 AND PRD_CD = #{prd_cd}																/*상품 코드*/
+		 
 	 </update>
 	
 	
 	
+	  	  
+  	 
+  	 <!-- 판매 3번pg 상세 리스트  --> 
+  	 <resultMap type="HashMap" id="panSang">
+   	   <result property="PRD_CD" 		column="PRD_CD" 		javaType="String" />
+   	   <result property="PRD_NM" 		column="PRD_NM" 		javaType="String" />
+   	   <result property="SAL_QTY" 		column="SAL_QTY" 		javaType="String" />
+	   <result property="SAL_VOS_AMT" 	column="SAL_VOS_AMT" 	javaType="String" />
+	   <result property="SAL_VAT_AMT" 	column="SAL_VAT_AMT" 	javaType="String" />
+	   <result property="SAL_AMT" 		column="SAL_AMT" 		javaType="String" />
+	</resultMap>
+	
+	
+	  <select id="panSangTable" resultMap="panSang" parameterType="HashMap">
+    	
+		       	SELECT D.PRD_CD								/*매장 코드*/
+			         , P.PRD_NM								/*상품명*/
+			         , D.SAL_QTY							/*판매수량*/
+			         , D.SAL_VOS_AMT						/*판매공급가액*/
+			         , D.SAL_VAT_AMT						/*판매부가세액*/
+			         , D.SAL_AMT							/*판매금액*/
+			         , D.PRD_CSMR_UPR						/*소비자단가*/
+			    FROM
+			    CS_SAL01_DT D								/*고객판매상세 테이블*/
+			    INNER JOIN
+			    CS_SAL01_MT M								/*고객판매 테이블*/
+			    ON D.PRT_CD = M.PRT_CD						/*매장코드와*/
+			    AND D.SAL_DT = M.SAL_DT						/*판매 일자*/
+			    AND D.SAL_NO = M.SAL_NO						/*판매번호가 일치 하는 곳*/
+			    
+			    INNER JOIN
+			    MA_PRD01_MT P								/*상품관리 테이블*/
+			    ON D.PRD_CD = P.PRD_CD						/*상품 코드가 일치 하는곳*/
+			    WHERE 1=1
+			    AND D.PRT_CD = #{prt_cd}
+			    AND M.CUST_NO = #{cust_no}
+			    AND D.SAL_DT = #{sal_dt}
+			    AND D.SAL_NO = #{sal_no}
+
+    	
+  	  </select>
+	
+	
+	
+	
+	
+	 <!-- 판매 4번pg 재고 리스트  --> 
+  	 <resultMap type="HashMap" id="jegoList">
+   	   <result property="PRD_CD" 		column="PRD_CD" 		javaType="String" />
+   	   <result property="PRD_NM" 		column="PRD_NM" 		javaType="String" />
+   	   <result property="IVCO_QTY" 		column="IVCO_QTY" 		javaType="String" />
+	   <result property="PRD_CSMR_UPR" 	column="PRD_CSMR_UPR" 	javaType="String" />
+	   <result property="PRD_TP_CD" 	column="PRD_TP_CD" 		javaType="String" />
+	   <result property="PRD_SS_CD" 	column="PRD_SS_CD" 		javaType="String" />
+	</resultMap>
+	
+	
+	  <select id="jegoTable" resultMap="jegoList" parameterType="HashMap">
+				
+				SELECT SD.PRT_CD						/*매장 명*/
+				     , SD.PRD_CD						/*상품 코드*/
+				     , MA.PRD_NM						/*상품 명*/
+				     , SD.IVCO_QTY						/*재고 수량*/
+				     , MA.PRD_TP_CD						/*상품 유형 코드*/
+				     , MA.PRD_SS_CD						/*상품 상태 코드*/
+				     ,TRIM(TO_CHAR(MA.PRD_CSMR_UPR, '999,999,999,999,999')) AS PRD_CSMR_UPR    /*소비자가*/
+				     
+				FROM SD_IVCO01_MT SD					/*매장현재고 테이블*/
+				LEFT OUTER JOIN							
+				MA_PRD01_MT MA							/*상품관리 테이블*/
+				ON SD.PRD_CD = MA.PRD_CD
+				INNER JOIN
+				MA_PRT_MT PM							/*거래처관리 테이블*/
+				ON SD.PRT_CD = PM.PRT_CD				/*매장현재고 매장코드와 거래처관리 매장코드가 같은 곳*/
+				WHERE 1=1
+				
+				<if test='prd_tp_20_dif == "Y"'>		/*4pg에서 견본품이 나오지 않도록 하기 위해*/
+				AND MA.PRD_TP_CD != '20'
+				</if>
+				
+				<if test='prt_cd != ""'>				/*매장코드가 비어있지 않다면*/
+				AND SD.PRT_CD = #{prt_cd}
+				</if>
+				
+				<if test='prd_nm != ""'>				/*상품 찾는 칸에 상품 코드나 상품명을 넣었을때*/
+				AND ( SD.PRD_CD LIKE '%' || #{prd_nm} || '%' OR  MA.PRD_NM LIKE '%' || #{prd_nm} || '%' )
+				</if>
+				
+				ORDER BY PRD_CD DESC
+    	
+    	
+  	  </select>
 	
     
  </mapper>
