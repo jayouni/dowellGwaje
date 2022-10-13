@@ -30,7 +30,7 @@ request.setCharacterEncoding("UTF-8");
 		
 		//반품 버튼
 		$("#banpumBtn").click(function(){
-			console.log("반품버튼 눌렀냐?!?!?!?!");
+			//console.log("반품버튼");
 			banPum();
 		});
 		
