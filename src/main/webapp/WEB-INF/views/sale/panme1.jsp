@@ -62,6 +62,9 @@ request.setCharacterEncoding("UTF-8");
 			var se_prt_cd_nm = $("#se_prt_nm").val();							// session 저장된 로그인유저의 매장명
 			var se_user_dt_cd = $("#se_user_dt_cd").val(); 
 			
+			$("#hapTable").hide();
+			
+			$("#cust_no").focus();
 			//화면에 세션 값 넣기
 			$("#prt_cd").val(se_prt_cd);
 			$("#prt_cd_nm").val(se_prt_cd_nm);
@@ -84,6 +87,7 @@ request.setCharacterEncoding("UTF-8");
 			//본사 로그인 일때
 			if(se_user_dt_cd == 1 ) {
 				$("#prt_cd").val("");
+				$("#prt_cd_nm").focus();
 				$("#prt_cd_nm").val("");
 				$("#panmeBtn").attr('disabled', true);
 				$("#prt_cd").attr('disabled', true);
@@ -253,6 +257,7 @@ request.setCharacterEncoding("UTF-8");
 			$("#sal_to").val(today);
 			$("#sal_from").val(seven);
 			$("tbody#main_body").html('');	
+			$("#hapTable").hide();
 			
 			if(se == 1){
 				$("#prt_cd").val("");
@@ -269,11 +274,7 @@ request.setCharacterEncoding("UTF-8");
 			}
 			
 			
-			$("#totSalQty").text('');
-			$("#totSalAmt").text('');
-			$("#cshStlmAmt").text('');
-			$("#crdStlmAmt").text('');
-			$("#pntStlmAmt").text('');
+
 			
 		}
 		
@@ -321,6 +322,7 @@ request.setCharacterEncoding("UTF-8");
 				//alert("성공");
 				let html = "";
 				let hap = "";
+				$("#hapTable").show();
 				if(json.length > 0){
 					var totSalQty = 0;
 					var totSalAmt = 0;
@@ -375,21 +377,31 @@ request.setCharacterEncoding("UTF-8");
 						html += "<td class='center' id='FST_REG_DT'>"+item.FST_REG_DT+"</td>";
 						html += "</tr>";
 						
+
+						
 					});
 					
-					$("#totSalQty").text(totSalQty);
-					$("#totSalAmt").text(addComma(totSalAmt));
-					$("#cshStlmAmt").text(addComma(cshStlmAmt));
-					$("#crdStlmAmt").text(addComma(crdStlmAmt));
-					$("#pntStlmAmt").text(addComma(pntStlmAmt));
+					
+					hap += "<tr style='width: 100%;'>";
+					hap += "<td colspan='4' style='background-color: #8ae6ff;'>합계</td>";
+					hap += "<td class='right' id='totSalQty' style='border-right:1px solid #00c8ff;'>"+addComma(totSalQty)+"</td>";
+					hap += "<td class='right' id='TOT_SAL_AMT' style='border-right:1px solid #00c8ff;'>"+addComma(totSalAmt)+"</td>";
+					hap += "<td class='right' id='CSH_STLM_AMT' style='border-right:1px solid #00c8ff;'>"+addComma(cshStlmAmt)+"</td>";
+					hap += "<td class='right' id='CRD_STLM_AMT' style='border-right:1px solid #00c8ff;'>"+addComma(crdStlmAmt)+"</td>";
+					hap += "<td class='right' id='PNT_STLM_AMT' >"+addComma(pntStlmAmt)+"</td>";
+					hap += "<td colspan='2' style='background-color: #8ae6ff;'></td>";
+					hap += "</tr>";
 				}
 				else {
 					html += "<tr>";
-					html += "<td  colspan='12' class='center'>검색조건에 맞는 고객이 존재하지 않습니다.</td>";
+					html += "<td  colspan='12' class='center'>검색 조건에 맞는 구매 이력이 존재하지 않습니다.</td>";
 					html += "</tr>";
+					$("#hapTable").hide();
 				}
 				
-				$("tbody#main_body").html(html);	
+				$("tbody#main_body").html(html);
+				$("tbody#hap_body").html(hap);
+				
 			},
 			error: function( error){
 				
@@ -674,40 +686,65 @@ request.setCharacterEncoding("UTF-8");
 	<table border="1" id="first_table" >
 		<thead id="main_table">
 		<tr id="first_tbl_tr">
-			<th class='center' rowspan="2">판매일자</th>
-			<th class='center' rowspan="2">고객번호</th>
-			<th class='center' rowspan="2">고객명</th>
-			<th class='center' rowspan="2">판매번호</th>
-			<th class='center' colspan="2">판매</th>
-			<th class='center' colspan="3">수금</th>
-			<th class='center' rowspan="2">등록자</th>
-			<th class='center' rowspan="2">등록시간</th>
+			<th class='center' rowspan="2" style='width:110px;'>판매일자</th>
+			<th class='center' rowspan="2"  style='width:110px;'>고객번호</th>
+			<th class='center' rowspan="2"  style='width:100px;'>고객명</th>
+			<th class='center' rowspan="2"  style='width:90px;'>판매번호</th>
+			<th class='center' colspan="2" style='width:145px;'>판매</th>
+			<th class='center' colspan="3" style='width:260px;'>수금</th>
+			<th class='center' rowspan="2" style='width:68px;'>등록자</th>
+			<th class='center' rowspan="2" style='width:115px;'>등록시간</th>
 		</tr>
 		<tr style="position:sticky;top:0;top:25px;">
-		<th >수량</th>
-		<th >금액</th>
-		<th >현금</th>
-		<th >카드</th>
-		<th >포인트</th>
+		<th style='width:50px;'>수량</th>
+		<th style='width:95px;'>금액</th>
+		<th style='width:96px;'>현금</th>
+		<th style='width:97px;'>카드</th>
+		<th style='width:68px;'>포인트</th>
 		</tr>
 		</thead>
 		<tbody id="main_body"/>
+		<!-- <tfoot id="main_foot"/> -->
 	</table>
 	</div>
-	<div style="margin-left:170px;width:70%">
+<!-- 	<div style="margin-left:170px;width:70%">
 		<table style="border: 2px solid #00c8ff; width:1046px ;text-align:center;">
 			<tr id="hapgye">
-				<td class="center border_left" style="width:425px; border-right:1px solid #00c8ff;">합계</td>
+				<td class="center border_left" style="width:417px; border-right:1px solid #00c8ff;">합계</td>
 				<td class="right" id="totSalQty" style="width:48px; border-right:1px solid #00c8ff;"></td>
 				<td class="right" id="totSalAmt" style="width:97px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" id="cshStlmAmt" style="width:99px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" id="crdStlmAmt" style="width:82px; border-right:1px solid #00c8ff;"></td>
+				<td class="right" id="cshStlmAmt" style="width:94px; border-right:1px solid #00c8ff;"></td>
+				<td class="right" id="crdStlmAmt" style="width:97px; border-right:1px solid #00c8ff;"></td>
 				<td class="right" id="pntStlmAmt" style="width:69px; border-right:1px solid #00c8ff;"></td>
 				<td class="right" style="width:69px; border-right:1px solid #00c8ff;"></td>
 				<td class="right"></td>
 			</tr>
 		</table>
+	</div> -->
+	
+	
+	<div id="hapTable" style="overflow:auto; width:100%; margin-left:170px; clear:both;" >
+	<table border="0" id="hap_table" >
+		<thead id="hap_table" style='width: 100%;'>
+		<tr id="hap_tbl_tr">
+ 			<th class='center' style="width:100px; background-color: #8ae6ff;"></th>
+			<th class='center' style="width:120px; background-color: #8ae6ff;"></th>
+			<th class='center' style="width:87px; background-color: #8ae6ff;"></th>
+			<th class='center' style="width:106px; background-color: #8ae6ff;"></th>
+			<th class='center' style="width:50px;"></th>
+			<th class='center' style="width:96px;"></th>
+			<th class='center' style="width:95px;"></th>
+			<th class='center' style="width:97px;"></th>
+			<th class='center' style="width:70px;"></th>
+			<th class='center' colspan='2' style="background-color: #8ae6ff; width:200px;"></th>
+			
+		</tr>
+
+		</thead>
+		<tbody id="hap_body"/> 
+	</table>
 	</div>
+	
 	
 	<form name="salDtPop">
 		<input type="hidden" name="PRT_CD">

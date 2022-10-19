@@ -63,6 +63,7 @@ request.setCharacterEncoding("UTF-8");
 	    	$("#cust_no_dis", opener.document).val(cust_no); 	 			
 	    	$("#cust_no", opener.document).val(cust_nm);
 	    	$("#avb_pnt", opener.document).val(avb_pnt);
+	    	$("#custNmHide", opener.document).val(cust_nm);
 	    	applyClose();
 			
 		});
@@ -206,6 +207,7 @@ request.setCharacterEncoding("UTF-8");
 			$("#cust_no_dis", opener.document).val(custNo); 								
 		    $("#cust_no", opener.document).val(custNm);
 		    $("#avb_pnt", opener.document).val(avbPnt);
+		    $("#custNmHide", opener.document).val(custNm);
 			
 			window.close();
 	

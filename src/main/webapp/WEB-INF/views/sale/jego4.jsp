@@ -73,11 +73,14 @@ request.setCharacterEncoding("UTF-8");
 			var ivcoQty = $("input[name='checkbox']:checked").parent().parent().children().eq(3).text();
 			var csmrUpr = $("input[name='checkbox']:checked").parent().parent().children().eq(4).text();
 			
-			
+			var obj = {
+			           "seq" : seq
+			          ,"prdCd" : prdCd
+			};
 			
 			//console.log('submit click jego4 checkDupPrd Start');
 			//적용 버튼 눌렀을때 부모창에 동일한 상품이 있는지 체크
-			if(opener.checkDupPrd(prdCd)) {
+			if(opener.checkDupPrd(obj)) {
 				alert('입력하신 상품들 중에 동일한 상품이 있습니다');
 				return;
 			}
@@ -90,6 +93,13 @@ request.setCharacterEncoding("UTF-8");
 			$("#sal_qty"+seq, opener.document).val(qty); 
 		    $("#csmr_upr"+seq, opener.document).val(csmrUpr);
 		    $("#sal_amt"+seq, opener.document).val(price); 	
+		    
+		    //값이 있을때만 sal_qty input 창이 열리게 하기 위해
+			var chkNm = $("#prd_nm"+seq).val(prdNm);
+			if(chkNm != ''){
+				
+				$("#sal_qty"+seq, opener.document).attr("readonly", false);
+			}
 	    	
 	    	
 	    	ChangClose();
@@ -140,7 +150,6 @@ request.setCharacterEncoding("UTF-8");
 		
 		window.close();
 	}
-	
 	
 	
 	
@@ -216,7 +225,6 @@ request.setCharacterEncoding("UTF-8");
 		}); // end of $.ajax
     	
     } // end of  findjego()
-	
 	
 	
 
@@ -300,12 +308,20 @@ request.setCharacterEncoding("UTF-8");
 		
 		console.log('prdSsCd : ' + prdSsCd);
 		
+		var obj = {
+		           "seq" : seq
+		          ,"prdCd" : prdCd
+		};
+		
 		if(ivcoQty != '0' && prdSsCd != 'C' && csmrUpr != '0') {
 			console.log('dbl_prd click jego4 checkDupPrd Start');
-			if(opener.checkDupPrd(prdCd)) {
+			if(opener.checkDupPrd(obj)) {
 				alert('입력하신 상품들 중에 동일한 상품이 있습니다');
 				return;
 			}
+			
+	
+			
 			$("#prd_cd"+seq, opener.document).val(prdCd); 								
 		    $("#prd_nm"+seq, opener.document).val(prdNm);
 			$("#ivco_qty"+seq, opener.document).val(ivcoQty);
@@ -314,6 +330,16 @@ request.setCharacterEncoding("UTF-8");
 		    $("#csmr_upr"+seq, opener.document).val(csmrUpr);
 		    $("#sal_amt"+seq, opener.document).val(price); 
 			
+		    
+		    //값이 있을때만 sal_qty input 창이 열리게 하기 위해		    
+			var chkNm = $("#prd_nm"+seq).val(prdNm);
+			if(chkNm != ''){
+				
+				$("#sal_qty"+seq, opener.document).attr("readonly", false);
+			}
+		    
+
+		    
 			window.close();
 		}
 
@@ -341,6 +367,7 @@ request.setCharacterEncoding("UTF-8");
 		var result = obj.toString().replace(/,/gi, "");
         return result;
 	}
+	
 
 </script>
 </head>

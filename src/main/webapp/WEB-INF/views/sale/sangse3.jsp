@@ -286,7 +286,7 @@ request.setCharacterEncoding("UTF-8");
 		
 	<table id="maeca_tbl">
 	<tr id="maecu"><td>매장 : ${item.PRT_CD }&nbsp;${item.PRT_NM }&nbsp;고객번호 : ${item.CUST_NO }&nbsp;${item.CUST_NM }</td></tr>
-	<tr id="panca"><td>판매수량 : ${item.TOT_SAL_QTY } 판매금액 : ${item.TOT_SAL_AMT } 현금 : ${item.CSH_STLM_AMT } 카드 : ${item.CRD_STLM_AMT } 포인트:${item.PNT_STLM_AMT }</td></tr>
+	<tr id="panca"><td>판매수량 : ${item.TOT_SAL_QTY } 판매금액 : ${item.TOT_SAL_AMT } 현금 : ${item.CSH_STLM_AMT } 카드 : ${item.CRD_STLM_AMT } 포인트 : ${item.PNT_STLM_AMT }</td></tr>
 	</table>
 	
 	

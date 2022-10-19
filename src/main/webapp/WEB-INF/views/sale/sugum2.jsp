@@ -62,14 +62,22 @@ request.setCharacterEncoding("UTF-8");
 		//플러스 버튼 눌렀을때 행 추가
 		$("#plus").click(function(){
 			
-			var seq = ($("#su_tbl2 >tbody tr").length)+1;
+			// 마지막 Row(<tr>)
+			var tr = $("#su_tbl2 >tbody tr:last");
+			var td = tr.children('td').get();
+			var id = td[1].id.replace("num", "");
+			var seq = id == '' ? 1 : parseInt(id)+1;
+			// 추가하는 Row의 번호
+			var num = ($("#su_tbl2 >tbody tr").length)+1;
 			
 			console.log("seq"+seq);
+			console.log("num"+num);
+		
 			
 			$("#su_body2").append(
 					
 					"<tr><td><input type='checkbox' name='chkbox' style='border-left: 1px solid #00c8ff;'></td>"+
-					"<td id='num"+seq+"'>"+seq+"</td>"+
+					"<td id='num"+seq+"'>"+num+"</td>"+
 					"<td><input type='text' style='width:120px;text-align:center;' id='prd_cd"+seq+"' name='prd_cd"+seq+"' onkeydown='findJego("+seq+")'><button type='button' num='"+seq+"'id='jegoBtn' onclick='toJego("+seq+")' style='margin-left:2px;width:18px; height:20px;'>"+
 					"<img src='../resources/image/dott.png' id='dot_img"+seq+"' style='height:13px;width:10px;' ></button></td>"+
 					"<td><input type='text' id='prd_nm"+seq+"' name='prd_nm"+seq+"' style='width:130px; cursor: default;' class='center' readonly='readonly' onfocus='this.blur();'></td>"+
@@ -102,6 +110,8 @@ request.setCharacterEncoding("UTF-8");
 				
 			}
 			
+		
+			
 		});
 		
 		
@@ -114,17 +124,43 @@ request.setCharacterEncoding("UTF-8");
 		}); 
 		
 		
- 		
- 	 	//고객 명 지우면 고객 번호와 포인트 지워지게 하게
-  	 	$("#cust_no").keyup(function(event){                  
- 	 		if(event.keyCode == 8 || event.keyCode == 46) {  // 백스페이스(8) 또는 Delete(46)키를 입력했을 경우
- 	           if($("#cust_no").val() == "") {               
- 		             $("#cust_no_dis").val("");
- 		             $("#avb_pnt").val("");
- 		          }
- 	 	         
- 	 	       }
- 	 	 });// end key up
+ 	 	 
+ 	 	 
+  	 	//고객 명 지우면 고객 번호와 포인트 지워지게 하게
+   	 	$("#cust_no").keyup(function(event){
+
+   	 		var prdNm= $("#prd_nm").val();
+  			var custDisNo = $("#cust_no_dis").val(); 	 	
+   	 		var custNmHide = $("#custNmHide").val();
+   	 		
+  	 		if(event.keyCode == 8 || event.keyCode == 46) {  // 백스페이스(8) 또는 Delete(46)키를 입력했을 경우
+  	           	
+  	           if($("#cust_no").val() == "") {               
+		             $("#cust_no_dis").val("");
+		            $("#pnt_stlm_amt").val("");
+		             $("#avb_pnt").val("");
+		          }
+	 	      
+  	 		//고객 번호가 있고 , 행에 물건이 들어있을때 고객을 지우는 동작을 하면	
+  	 	 	if(custDisNo != ''){
+  	 			if(checkPrdNm() == true ) {
+  	        	   
+  	        	   if(confirm("불러온 상품이 존재합니다. 그래도 고객을 바꾸시겠습니까 ?")){
+  	        		  
+	  				reFresh();
+  	        		   
+  	        	   }else{
+  	        		   
+  	        		 $("#cust_no").val(custNmHide);
+
+  	        	   }
+  		          }
+  	 		}
+  	 	 }      
+   	 	
+  	 	 });// end key up
+ 	 	 
+ 	 	
  	 	 
  	 	 
 		 // 모든 sal_qty의 변경에 반응
@@ -134,11 +170,15 @@ request.setCharacterEncoding("UTF-8");
  	        var tr = $(this).parent().parent();
  	        var td = tr.children('td').get();
  	        
- 	        //첫 번째 행 제외 ,행 생성시 생성된 seq 번호로 행 구분  
- 	        var seq = "";
+ 	         
+			var id = td[1].id.replace("num", "");
+			var seq = '';
+			//첫 번째 행 제외 , 행 생성시 생성된 td의 id로 seq 생성
  	        if(td[1].innerText != '1') {
- 	        	seq = td[1].innerText
- 	        }
+ 	        	seq = id ;
+ 	        	
+ 	        } 
+ 	        
 	    	
  	        //수량 입력시 바뀌는 값들 넣기
 	        var ivcOri = $("#ivcOri"+seq).val();
@@ -147,14 +187,18 @@ request.setCharacterEncoding("UTF-8");
  			var upr = removeComma($("#csmr_upr"+seq).val());
  			var price = removeComma($("#sal_amt"+seq).val());
  			
+ 			
+ 			
  			//판매재고가 비어 있지 않을 때 
  			if(ivcOri != '') {
- 					
+ 				
+ 				
  				//판매수량이 비어 있다면 , 다시 판매 재고 원 상태 복귀  , 그리고 판매수량 0
 	 				if(qty == ''){
 	 	 				ivco = ivcOri;
 	 	 				qty = '0';
 	 	 			}
+
 	 	 			
  					//숫자 계산용 값 변환
 	 	 			var fQty = parseInt(qty);
@@ -340,6 +384,11 @@ request.setCharacterEncoding("UTF-8");
 		
 	}); //document ready end
 	
+	
+	function reFresh(){
+		window.location.reload();
+	}
+
 
 
 	
@@ -376,10 +425,16 @@ request.setCharacterEncoding("UTF-8");
 						var vosAmt = 0;
 						var vatAmt = 0;
 						var seq = json[0].SEQ;
-						
+						var toPrdCd = prdCd.toString();
+						console.log("toPrdCd" + toPrdCd);
+
+						var obj = {
+						           "seq" : seq
+						          ,"prdCd" : prdCd
+						};
 						
 						//console.log('Enter sugum2 checkDupPrd Start');
-						if(checkDupPrd(prdCd)) {
+						if(checkDupPrd(obj)) {
 							alert('입력하신 상품들 중에 동일한 상품이 있습니다');
 							$("#prd_cd"+seq).val("");
 							return;
@@ -387,6 +442,9 @@ request.setCharacterEncoding("UTF-8");
 						
 						
 						$("#prd_cd"+seq).val(prdCd);
+						$("#toPrdCd").val(toPrdCd);
+						$("#chkPrdCd").val(prdCd);
+						
 						$("#prd_nm"+seq).val();
 						$("#ivco_qty"+seq).val(ivco);
 						$("#ivcOri"+seq).val(ivco);
@@ -420,8 +478,8 @@ request.setCharacterEncoding("UTF-8");
 							
 						}
 						
-						//견본품이 아니고 소비자가가 0일 때
-						if(tpCd != '20' && csmr == '0'){
+						//소비자가가 0일 때
+						if(csmr == '0'){
 							alert("소비자가가 0 입니다. 다시 골라 주세요.");
 							$("#prd_cd"+seq).val("");
 							$("#prd_nm"+seq).val("");
@@ -479,74 +537,136 @@ request.setCharacterEncoding("UTF-8");
 		//console.log('findJego enterkey event before');
 		//상품 코드 다 지웠을때 다시 계산 용
 		if(event.keyCode == 8 || event.keyCode == 46) {  // 백스페이스(8) 또는 Delete(46)키를 입력했을 경우
-			console.log('findJego enterkey event after');
-			var prd_nm = $("#prd_cd"+seq).val();
-			if(prd_nm == '') {
-				$("#prd_nm"+seq).val('');
-				$("#ivco_qty"+seq).val('');
-				$("#ivcOri"+seq).val('');
-				$("#sal_qty"+seq).val('');
-				$("#csmr_upr"+seq).val('');
-				$("#sal_amt"+seq).val('');
-				$("#vos_amt"+seq).val('');
-				$("#vat_amt"+seq).val('');
-	 			
-	 			var totQty = 0;
-	 			$("input.sal_qty").each(function() {
-	 	 			console.log("$(this).val() : " + $(this).val());
-	 	 			var salQty = $(this).val();
-	 	 			if(salQty == ''){
-	 	 				salQty = '0';
-	 	 			}
-	 	 			totQty += parseInt(salQty);
-	 	 		});
-	 			console.log("totQty : " + totQty);
-	 			
-	 			var totAmt = 0;
-	 			$("input.sal_amt").each(function() {
-	 	 			console.log("$(this).val() : " + $(this).val());
-	 	 			var salAmt = removeComma($(this).val());
-	 	 			if(salAmt == ''){
-	 	 				salAmt = '0';
-	 	 			}
-	 	 			totAmt += parseInt(salAmt);
-	 	 		});
-	 			console.log("totAmt : " + totAmt);
-	 			
-	 			var totVos = 0;
-	 			$("input.vos_amt").each(function() {
-	 	 			console.log("$(this).val() : " + $(this).val());
-	 	 			var vosAmt = $(this).val();
-	 	 			if(vosAmt == ''){
-	 	 				vosAmt = '0';
-	 	 			}
-	 	 			totVos += parseInt(vosAmt);
-	 	 		});
-	 			console.log("totVos : " + totVos);
-	 			
-	 			var totVat = 0;
-	 			$("input.vat_amt").each(function() {
-	 	 			console.log("$(this).val() : " + $(this).val());
-	 	 			var vatAmt = $(this).val();
-	 	 			if(vatAmt == ''){
-	 	 				vatAmt = '0';
-	 	 			}
-	 	 			totVat += parseInt(vatAmt);
-	 	 		});
-	 			console.log("totVat : " + totVat);
-	 			
-	 			$("#tot_sal_qty").val(totQty);
-	 			$("#tot_sal_amt").val(addComma(totAmt+''));
-	 			$("#tot_vos_amt").val(totVos);
-	 			$("#tot_vat_amt").val(totVat);
+			//console.log('findJego enterkey event after');
+
+		
+			var prd_cd = $("#prd_cd"+seq).val();
+			var prd_nm = $("#prd_nm"+seq).val();
+			var chkPrdCd = $("#chkPrdCd").val();
+
+			
+			if(prd_nm != '') {
+				
+				if(confirm("상품을 변경 하시겠습니까 ?")){
+					$("#prd_cd"+seq).val('');
+					$("#prd_nm"+seq).val('');
+					$("#ivco_qty"+seq).val('');
+					$("#ivcOri"+seq).val('');
+					$("#sal_qty"+seq).val('');
+					$("#csmr_upr"+seq).val('');
+					$("#sal_amt"+seq).val('');
+					$("#vos_amt"+seq).val('');
+					$("#vat_amt"+seq).val('');
+		 			
+		 			var totQty = 0;
+		 			$("input.sal_qty").each(function() {
+		 	 			console.log("$(this).val() : " + $(this).val());
+		 	 			var salQty = $(this).val();
+		 	 			if(salQty == ''){
+		 	 				salQty = '0';
+		 	 			}
+		 	 			totQty += parseInt(salQty);
+		 	 		});
+		 			console.log("totQty : " + totQty);
+		 			
+		 			var totAmt = 0;
+		 			$("input.sal_amt").each(function() {
+		 	 			console.log("$(this).val() : " + $(this).val());
+		 	 			var salAmt = removeComma($(this).val());
+		 	 			if(salAmt == ''){
+		 	 				salAmt = '0';
+		 	 			}
+		 	 			totAmt += parseInt(salAmt);
+		 	 		});
+		 			console.log("totAmt : " + totAmt);
+		 			
+		 			var totVos = 0;
+		 			$("input.vos_amt").each(function() {
+		 	 			console.log("$(this).val() : " + $(this).val());
+		 	 			var vosAmt = $(this).val();
+		 	 			if(vosAmt == ''){
+		 	 				vosAmt = '0';
+		 	 			}
+		 	 			totVos += parseInt(vosAmt);
+		 	 		});
+		 			console.log("totVos : " + totVos);
+		 			
+		 			var totVat = 0;
+		 			$("input.vat_amt").each(function() {
+		 	 			console.log("$(this).val() : " + $(this).val());
+		 	 			var vatAmt = $(this).val();
+		 	 			if(vatAmt == ''){
+		 	 				vatAmt = '0';
+		 	 			}
+		 	 			totVat += parseInt(vatAmt);
+		 	 		});
+		 			console.log("totVat : " + totVat);
+		 			
+		 			$("#tot_sal_qty").val(totQty);
+		 			$("#tot_sal_amt").val(addComma(totAmt+''));
+		 			$("#tot_vos_amt").val(totVos);
+		 			$("#tot_vat_amt").val(totVat);
+					
+				}else {
+					
+					//값을 세팅해주는 속도보다 백스페이스가 나중에 눌려서 값이 지워지는걸 방지하기 위해
+					setTimeout(function() {
+						
+						$("#prd_cd"+seq).val(chkPrdCd);
+					}, 125); //  0.125초 후 함수가 실행됨
+					
+				}
+				
+			}
+			
+			
  			}
-		}
+		//}
     	
     } // end of  findjego()
     
     
     // List 중에 동일 상품 있는지 확인
-    function checkDupPrd(prd_cd) {
+    function checkDupPrd(obj) {
+    	//debugger;
+    	var result = false;
+    	var prd_cd = obj.prdCd;
+    	var bfSeq = obj.seq;
+		$("input:checkbox[name='chkbox']").each(function(k, kVal) {
+ 			console.log("kVal :: ", kVal.parentElement.parentElement);
+            
+ 	        // 현재 Row(<tr>)
+ 	        var tr = kVal.parentElement.parentElement;
+ 	        var td = tr.children;
+ 	        var input = td[2].children;
+ 	        var val = input[0].value;
+ 	         
+			var id = td[1].id.replace("num", "");
+			var afSeq = id ;
+ 	        
+ 	        console.log('val : ' + val + ' : ' + typeof(val));
+ 	        console.log('prd_cd : ' + prd_cd + ' : ' + typeof(prd_cd));
+ 	        console.log(val == prd_cd);
+ 	        
+ 	        
+ 	       	if(bfSeq != afSeq) {
+ 	        	if(val == prd_cd) {
+ 	        		result = true;
+ 	        		// break;
+ 	        		return false;
+ 	        	}
+ 	       	}
+ 		});
+		
+		console.log('return : ' + result);
+		return result;
+    }
+    
+    
+    
+    //행에 가져온 상품이 존재하는지 여부 체크 
+    function checkPrdNm() {
+    	//debugger;
     	var result = false;
 		$("input:checkbox[name='chkbox']").each(function(k, kVal) {
  			console.log("kVal :: ", kVal.parentElement.parentElement);
@@ -557,11 +677,9 @@ request.setCharacterEncoding("UTF-8");
  	        var input = td[2].children;
  	        var val = input[0].value;
  	        
- 	        console.log('val : ' + val + ' : ' + typeof(val));
- 	        console.log('prd_cd : ' + prd_cd + ' : ' + typeof(prd_cd));
- 	        console.log(val == prd_cd);
+ 	        console.log('checkPrdNm val : ' + val + ' : ' + typeof(val));
  	        
- 	        if(val == prd_cd) {
+ 	        if(val != '') {
  	        	result = true;
  	        	// break;
  	        	return false;
@@ -608,6 +726,7 @@ request.setCharacterEncoding("UTF-8");
 					$('#cust_no_dis').val(custNo);
 					$('#cust_no').val(custNm);
 					$('#avb_pnt').val(avbPnt);
+					$("#custNmHide").val(custNm);
 					
 				} else {
 					alert('일치하는 값이 없거나 두개 이상입니다');
@@ -731,6 +850,9 @@ request.setCharacterEncoding("UTF-8");
 
 	}
 	
+
+	
+	
 	
 	//체크 박스를 체크 하지 않고 마이너스 버튼을 누르면 밑에서 부터 삭제 됌
 	function delRow(){
@@ -800,6 +922,7 @@ request.setCharacterEncoding("UTF-8");
 		
 	}
 	
+	
 	//행 삭제 후 다시 생성시 번호가 섞여, 번호를 다시 매김
 	function resetNum() {
 		$("input:checkbox[name='chkbox']").each(function(k, kVal) {
@@ -825,33 +948,7 @@ request.setCharacterEncoding("UTF-8");
 	}
 	
 	
-	
-		//팝팝
-		
-		function popUp_jego4(item){
-			  
-			  var jegoPop = document.jegoPop;    
-			  var url = 'http://localhost:8080/gwaje/sale/jegoPopup';
-			  var title = "popup4";
-			  var status = "toolbar=no,scrollbars=no,resizable=yes,status=no,menubar=no,width=990, height=800, top=80,left=300";
-			  window.open('',title,status);            
-			  jegoPop.action = url;     
-			  jegoPop.target = title; //window,open()의 두번째 인수와 같아야 하며 필수다.  
-			  jegoPop.method="post";
-			  jegoPop.SEQ.value = item.SEQ;
-			  jegoPop.submit();
-			  
-		} 
-	
-		function popUp_cust(){
-			
-			var url = "http://localhost:8080/gwaje/search/customer";
-			var title = "popup_cust";
-			var status = "toolbar=no,scrollbars=no,resizable=yes,status=no,menubar=no,width=810, height=600, top=100,left=250";
-			window.open(url, title, status);
-			
-		}
-		
+
 		
 		
 		//카드 유효년월 용 유효성 날짜
@@ -972,6 +1069,7 @@ request.setCharacterEncoding("UTF-8");
 	    	console.log('salMtMap : ' + JSON.stringify(salMtMap));
 	    	
 	    	// CS_CUST_PNT_D/CS_CUST_PNT_M Table Insert/Update Data 생성
+	    	// 포인트 미사용일 경우 지불한 값의 10%를 포인트 적립
 	    	var pntList = new Array();
 	    	var pnt = (crd_stlm_amt + csh_stlm_amt) * 0.1;
 	    	var pntMap = {
@@ -981,6 +1079,7 @@ request.setCharacterEncoding("UTF-8");
 	    			,"pnt" : pnt
 	    	};
 	    	pntList.push(pntMap);
+	    	// 구매시 포인트를 사용 할 경우 , 포인트 테이블에서 쓴 포인트를 차감
 	    	if(pnt_stlm_amt > 0) {
 	    		var pntMap = {
 	        			"cust_no" : suFrm1Obj.cust_no_dis
@@ -990,6 +1089,8 @@ request.setCharacterEncoding("UTF-8");
 	        	};
 	    		pntList.push(pntMap);
 	    	}
+	    	console.log('salDtList : ' + JSON.stringify(salDtList));
+	    	console.log('salMtMap : ' + JSON.stringify(salMtMap));
 	    	console.log('pntList : ' + JSON.stringify(pntList));
 	    	
 	    	// save ajax
@@ -1027,7 +1128,7 @@ request.setCharacterEncoding("UTF-8");
 	    // return boolean
 	    function saveValChk() {
 	    	
-	    	// 1. 고객번호 체크
+	    	// 고객번호 체크
 	    	var cust_no = $('#cust_no_dis').val();
 	    	if(cust_no == '') {
 	    		alert('고객번호는 필수 값입니다.');
@@ -1035,7 +1136,16 @@ request.setCharacterEncoding("UTF-8");
 	    		return true;
 	    	}
 	    	
-	    	// 2. 카드금액이 있는 경우 유효일자/카드회사/카드번호 체크
+	    	//tot_sal_qty 비어있으면 저장 안되게 
+	    	var totSalQty = $('#tot_sal_qty').val();
+	    	if(totSalQty == '') {
+	    		alert('판매 등록 할 상품이 없습니다. 등록 확인 해주세요.');
+	    		$('#prd_cd').focus();
+	    		return true;
+	    	}
+	    	
+	    	
+	    	// 카드금액이 있는 경우 유효일자/카드회사/카드번호 체크
 	    	var crd_stlm_amt = removeComma($('#crd_stlm_amt').val());
 	    	if(crd_stlm_amt != '') {
 	    		var vld_ym = $('#vld_ym').val();
@@ -1155,7 +1265,7 @@ request.setCharacterEncoding("UTF-8");
 				row.prt_cd = prt_cd
 				console.log(row.prd_cd + ' : ' + row.sal_qty + ' : ' + row.sal_amt);
 				//상품코드 입력창에 아무 값이나 들어갔을 경우 저장이 되는 걸 막기 위해 상품명이 비어있지 않을 때도 포함하여 저장
-				if(row.prd_cd != '' && row.prd_nm != '' && row.sal_qty != '0' && row.sal_amt != '0') {
+				if(row.prd_cd != '' && row.prd_nm != '' && row.sal_qty != '' && row.sal_amt != '0') {
 					list.push(row);
 				}
 			}
@@ -1212,6 +1322,34 @@ request.setCharacterEncoding("UTF-8");
 		//숫자만 입력 되도록 처리
 		function inputNum(obj) {
 			obj.value = obj.value.replace(/[^0-9]/g, '').replace(/(\..*)\./g, '$1');
+			obj.value = obj.value.replace(/(^0+)/, "");
+		}
+		
+		
+		//팝팝
+		
+		function popUp_jego4(item){
+			  
+			  var jegoPop = document.jegoPop;    
+			  var url = 'http://localhost:8080/gwaje/sale/jegoPopup';
+			  var title = "popup4";
+			  var status = "toolbar=no,scrollbars=no,resizable=yes,status=no,menubar=no,width=990, height=800, top=80,left=300";
+			  window.open('',title,status);            
+			  jegoPop.action = url;     
+			  jegoPop.target = title; //window,open()의 두번째 인수와 같아야 하며 필수다.  
+			  jegoPop.method="post";
+			  jegoPop.SEQ.value = item.SEQ;
+			  jegoPop.submit();
+			  
+		} 
+	
+		function popUp_cust(){
+			
+			var url = "http://localhost:8080/gwaje/search/customer";
+			var title = "popup_cust";
+			var status = "toolbar=no,scrollbars=no,resizable=yes,status=no,menubar=no,width=810, height=600, top=100,left=250";
+			window.open(url, title, status);
+			
 		}
 
 </script>
@@ -1289,7 +1427,7 @@ request.setCharacterEncoding("UTF-8");
 		<tbody id="su_body2">
 		<tr>
 			<td><input type="checkbox" name="chkbox" class="center border_left" style='border-left: 1px solid #00c8ff;'></td>
-			<td id="num1">1</td>
+			<td id="num">1</td>
 			<td><input type="text" style="width:120px;text-align:center;" id="prd_cd" name="prd_cd" onkeydown="findJego('')" ><button type="button" id="jegoBtn" onclick="toJego('')" style="margin-left:2px;width:18px; height:20px;">
 			<img src="../resources/image/dott.png" id="dot_img" style="	height:13px;width:10px;" ></button></td>
 			<td><input type="text" id="prd_nm" name="prd_nm" style="width:130px; cursor: default;" class="center" readonly="readonly" onfocus="this.blur();"></td>
@@ -1326,6 +1464,10 @@ request.setCharacterEncoding("UTF-8");
 	</div>
 	
 	<input type="hidden" name="se_prt_cd" id="se_prt_cd" value="${sessionScope.member.prt_cd}" />
+	<input type="hidden" name="toPrdCd" id="toPrdCd"  />
+	<input type="hidden" name="chkPrdCd" id="chkPrdCd"  />
+	<input type="hidden" name="custNmHide" id="custNmHide"  />
+	
 	
 	<form name="jegoPop">
 		<input type="hidden" name="SEQ">

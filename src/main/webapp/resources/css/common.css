@@ -231,6 +231,25 @@ li a {
 
 }
 
+/* 판매 1 pg*/
+
+#hap_table{
+	
+	width: 1045px;
+	/* height:80px; */
+	border: 1px solid #00c8ff;
+	text-align:center;
+	margin-bottom:30px;
+
+}
+#hap_tbl_tr{
+	
+	
+	width:100%;
+	
+	
+}
+
 
 /* 2번 */
 

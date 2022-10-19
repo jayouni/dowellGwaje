@@ -43,6 +43,7 @@ request.setCharacterEncoding("UTF-8");
 	    function getHistory() {
 
 	    	var cust_no = $("#gogekhis").val();
+	    	
 	    	    	
 	    	$.ajax({
 				url:"<%= request.getContextPath()%>/search/memHistory",
@@ -75,7 +76,6 @@ request.setCharacterEncoding("UTF-8");
 						});
 					}
 					else {
-						
 						
 						
 						html += "<tr>";

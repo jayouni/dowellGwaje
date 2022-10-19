@@ -494,7 +494,7 @@
 		//5번 페이지 
 		function custHist(item){
 			
-				var cust_his =item.CUST_NO;
+				var cust_his = item.CUST_NO;
 				$("#cust_history").val(cust_his);
 				popUp_detail(item); 
 			

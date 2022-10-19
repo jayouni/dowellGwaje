@@ -867,7 +867,7 @@
                    , SAL.CRD_STLM_AMT																	/*카드 결제금액*/
                    , SAL.PNT_STLM_AMT																	/*현금 결제금액*/
 			ORDER BY SAL.SAL_DT DESC																	/*판매 일자*/
-			       , SAL.SAL_NO																			/*판매 번호*/
+			       , SAL.SAL_NO	DESC																	/*판매 번호*/
 
     	
   	  </select>
@@ -876,7 +876,7 @@
 
 
 
-  	<!-- 2pg 판매등록 CS_SAL01_MT TABLE INSERT -->
+  	<!-- 2pg 판매등록 및 3pg 반품처리 CS_SAL01_MT TABLE INSERT -->
 	<!--primary key 인 판매번호를 자동 생성 하기 위해 select key 사용  -->
 	<insert id="insSalMt" parameterType="HashMap">
 	
@@ -935,7 +935,7 @@
   	  
   	  
   	  
-  	<!-- 2pg 판매등록 상세 CS_SAL01_DT TABLE INSERT -->
+  	<!-- 2pg 판매등록 및 3pg 반품처리 상세 CS_SAL01_DT TABLE INSERT -->
 	<!--primary key 인 판매일련번호를 자동 생성 하기 위해 select key 사용  -->
 	<insert id="insSalDt" parameterType="HashMap">
 	
