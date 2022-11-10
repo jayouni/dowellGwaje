@@ -45,6 +45,9 @@ request.setCharacterEncoding("UTF-8");
 		//console.log(today);
 		//날짜 계산 끝
 		
+		//한글 있는지 체크
+		const kor = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+		
 
 	$(document).ready(function() {
 	
@@ -56,7 +59,6 @@ request.setCharacterEncoding("UTF-8");
 			popUp_cust();
 			
 		});
-		
 		
 		
 		//플러스 버튼 눌렀을때 행 추가
@@ -110,9 +112,25 @@ request.setCharacterEncoding("UTF-8");
 				
 			}
 			
+		});
 		
+		
+		//저장 버튼
+		$("#submit").click(function(){
+			
+					if(confirm("저장 하시겠습니까?")){
+						
+						saveSal();
+						
+					}else{
+						
+						alert("저장이 취소 되었습니다.");
+					}
 			
 		});
+		
+		
+		
 		
 		
  		//엔터시 바로 고객 찾는 함수 실행
@@ -136,16 +154,36 @@ request.setCharacterEncoding("UTF-8");
   	 		if(event.keyCode == 8 || event.keyCode == 46) {  // 백스페이스(8) 또는 Delete(46)키를 입력했을 경우
   	           	
   	           if($("#cust_no").val() == "") {               
-		             $("#cust_no_dis").val("");
-		            $("#pnt_stlm_amt").val("");
-		             $("#avb_pnt").val("");
+ 		             $("#cust_no_dis").val("");
+		             $("#pnt_stlm_amt").val("");
+		             $("#avb_pnt").val(""); 
+		             $("#csh_stlm_amt").val("");
+		             
+		             if($("#crd_stlm_amt").val() != ''){
+   	 					
+  	 					$("#crd_stlm_amt").val("");
+  	 					$("#vld_ym").val("");
+  	 					$("#crd_co_cd").val("").prop("selected", true);
+  	 					$("#crd_no1").val("");
+  	 					$("#crd_no2").val("");
+  	 					$("#crd_no3").val("");
+  	 					$("#crd_no4").val("");
+  	 					
+  	 					$("#vld_ym").attr("disabled", true);
+  	 					$("#crd_co_cd").attr("disabled", true);
+  	 					$("#crd_no1").attr("disabled", true);
+  	 					$("#crd_no2").attr("disabled", true);
+  	 					$("#crd_no3").attr("disabled", true);
+  	 					$("#crd_no4").attr("disabled", true);
+  	 					}
+  	        	 
 		          }
 	 	      
   	 		//고객 번호가 있고 , 행에 물건이 들어있을때 고객을 지우는 동작을 하면	
   	 	 	if(custDisNo != ''){
   	 			if(checkPrdNm() == true ) {
   	        	   
-  	        	   if(confirm("불러온 상품이 존재합니다. 그래도 고객을 바꾸시겠습니까 ?")){
+  	        	   if(confirm("불러온 상품이 존재합니다 . 고객을 바꾸시면 불러온 상품이  \n사라집니다. 그래도 고객을 바꾸시겠습니까 ?")){
   	        		  
 	  				reFresh();
   	        		   
@@ -170,6 +208,10 @@ request.setCharacterEncoding("UTF-8");
  	        var tr = $(this).parent().parent();
  	        var td = tr.children('td').get();
  	        
+ 	        //숫자 입력시 , 자동 생성
+			var sal_qty = removeComma($(this).val());
+			this.value = addComma(sal_qty);
+ 	        
  	         
 			var id = td[1].id.replace("num", "");
 			var seq = '';
@@ -181,9 +223,9 @@ request.setCharacterEncoding("UTF-8");
  	        
 	    	
  	        //수량 입력시 바뀌는 값들 넣기
-	        var ivcOri = $("#ivcOri"+seq).val();
- 			var ivco = $("#ivco_qty"+seq).val();
- 			var qty = $("#sal_qty"+seq).val();
+	        var ivcOri = removeComma($("#ivcOri"+seq).val());
+ 			var ivco = removeComma($("#ivco_qty"+seq).val());
+ 			var qty = removeComma($("#sal_qty"+seq).val());
  			var upr = removeComma($("#csmr_upr"+seq).val());
  			var price = removeComma($("#sal_amt"+seq).val());
  			
@@ -198,9 +240,15 @@ request.setCharacterEncoding("UTF-8");
 	 	 				ivco = ivcOri;
 	 	 				qty = '0';
 	 	 			}
+ 				
+ 					if(upr == ''){
+ 						upr = '0'
+ 					}
 
 	 	 			
  					//숫자 계산용 값 변환
+ 					//부가세 공급가 액 
+ 					// 10% 0.1 
 	 	 			var fQty = parseInt(qty);
 	 	 			var fIvcOri = parseInt(ivcOri);
 	 	 			var fIvco = parseInt(ivcOri) - parseInt(qty);
@@ -209,8 +257,8 @@ request.setCharacterEncoding("UTF-8");
 	 	 			var fVos = fPrice - fVat;
 	 	 			
 	 	 			//인풋창에 값 넣어주기
-	 	 			$("#ivco_qty"+seq).val(fIvco);
-	 	 			$("#sal_amt"+seq).val(addComma(fPrice+''));
+	 	 			$("#ivco_qty"+seq).val(addComma(fIvco));
+	 	 			$("#sal_amt"+seq).val(addComma(fPrice));
 	 	 			$("#vos_amt"+seq).val(fVos);
 	 	 			$("#vat_amt"+seq).val(fVat);
 	 	 			
@@ -227,70 +275,9 @@ request.setCharacterEncoding("UTF-8");
 	 		 			$("#vat_amt"+seq).val('0');
 	 				}
 	 				
-	 				// 총 판매 수량
-	 				var totQty = 0;
-	 				//모든 행들에 쓰여 있는 판매 수량 값을 구하기 위해 
-	 				$("input.sal_qty").each(function() {
-	 		 			console.log("$(this).val() : " + $(this).val());
-	 		 			var salQty = $(this).val();
-	 		 			//판매 수량이 비어있다면 0 으로 만들어준다
-	 		 			if(salQty == ''){
-	 		 				salQty = '0';
-	 		 			}
-	 		 			//총 판매수량은 모든 판매수량을 변환하여 더한 값들
-	 		 			totQty += parseInt(salQty);
-	 		 		});
-	 				console.log("totQty : " + totQty);
+	 			// 총 판매 수량 + 총 판매 금액 + 총 판매 공급 가액 + 총 판매 부가세액 용 계산
+	 			gyeSan();
 	 				
-	 				//총 판매 금액
-	 				var totAmt = 0;
-	 				//모든 행들에 쓰여 있는 판매 금액을 구하기 위해 
-	 				$("input.sal_amt").each(function() {
-	 		 			console.log("$(this).val() : " + $(this).val());
-	 		 			//콤마를 제거한 판매 금액 
-	 		 			var salAmt = removeComma($(this).val());
-	 		 			//판매 금액이 비어있다면 0으로 만들어준다
-	 		 			if(salAmt == ''){
-	 		 				salAmt = '0';
-	 		 			}
-	 		 			//총 판매 금액은 모든 판매 금액들은 변환하여 더한 값들
-	 		 			totAmt += parseInt(salAmt);
-	 		 		});
-	 				console.log("totAmt : " + totAmt);
-	 				
-	 				//총 판매 공급 가액 = 소비자 판매가 - (소비자 판매가 * 10%)
-	 				var totVos = 0;
-	 				$("input.vos_amt").each(function() {
-	 		 			console.log("$(this).val() : " + $(this).val());
-	 		 			var vosAmt = $(this).val();
-	 		 		    //공급가 금액이 비어있다면 0으로 만들어준다
-	 		 			if(vosAmt == ''){
-	 		 				vosAmt = '0';
-	 		 			}
-	 		 		    //총 공급가액은 모든 판매 금액들의 소비자 판매가 - (소비자 판매가 * 10%) 변환하여 더한 값들
-	 		 			totVos += parseInt(vosAmt);
-	 		 		});
-	 				console.log("totVos : " + totVos);
-	 				
-	 				//총 판매 부가세액 = 소비자 판매가 * 10%
-	 				var totVat = 0;
-	 				$("input.vat_amt").each(function() {
-	 		 			console.log("$(this).val() : " + $(this).val());
-	 		 			var vatAmt = $(this).val();
-	 		 		   //부가세 금액이 비어있다면 0으로 만들어준다
-	 		 			if(vatAmt == ''){
-	 		 				vatAmt = '0';
-	 		 			}
-	 		 		//총 판매 부가세액은 모든 판매 금액들의 소비자 판매가 * 10% 변환하여 더한 값들
-	 		 			totVat += parseInt(vatAmt);
-	 		 		});
-	 				console.log("totVat : " + totVat);
-	 				
-	 				//값들을 저장한다
-	 				$("#tot_sal_qty").val(totQty);
-	 	 			$("#tot_sal_amt").val(addComma(totAmt+''));
-	 	 			$("#tot_vos_amt").val(totVos);
-	 	 			$("#tot_vat_amt").val(totVat);
  			}
 			
 	     });
@@ -379,6 +366,12 @@ request.setCharacterEncoding("UTF-8");
 			}
 		});
 		
+		
+	      
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
 
 		
 		
@@ -412,8 +405,6 @@ request.setCharacterEncoding("UTF-8");
 					console.log(json);												
 					if(json.length == 1) {
 						
-						
-						
 						var prdCd = json[0].PRD_CD;
 						var prdNm = json[0].PRD_NM;
 						var ivco = json[0].IVCO_QTY;
@@ -427,7 +418,9 @@ request.setCharacterEncoding("UTF-8");
 						var seq = json[0].SEQ;
 						var toPrdCd = prdCd.toString();
 						console.log("toPrdCd" + toPrdCd);
-
+						console.log("toPrdCd.length" + toPrdCd.length);
+						
+						//동일 상품이 있는지 체크 용 , seq를 이용해 같은 행에 있는 값 중복 방지
 						var obj = {
 						           "seq" : seq
 						          ,"prdCd" : prdCd
@@ -444,19 +437,22 @@ request.setCharacterEncoding("UTF-8");
 						$("#prd_cd"+seq).val(prdCd);
 						$("#toPrdCd").val(toPrdCd);
 						$("#chkPrdCd").val(prdCd);
-						
-						$("#prd_nm"+seq).val();
+						$("#prd_nm"+seq).val(prdNm);
 						$("#ivco_qty"+seq).val(ivco);
 						$("#ivcOri"+seq).val(ivco);
 						$("#sal_qty"+seq).val(salQty);
-						$("#csmr_upr"+seq).val(csmr);
+						$("#csmr_upr"+seq).val(addComma(csmr));
 						$("#sal_amt"+seq).val(salAmt);
 						$("#vos_amt"+seq).val(vosAmt);
 						$("#vat_amt"+seq).val(vatAmt);
 						
+						//상품코드에 더 입력되는 걸 막기 위해
+						$("#prd_cd"+seq).attr("maxlength","9");
+						$("#prd_cd"+seq).attr("oninput","inputCheck(this)");
+						
 						
 						//상품 코드가 아무 글자이거나 있지 않는 상품일때 판매 수량을 막기 위한 코드
-						var chkNm = $("#prd_nm"+seq).val(prdNm);
+						var chkNm = $("#prd_nm"+seq).val();
 						if(chkNm != ''){
 							
 							$("#sal_qty"+seq).attr("readonly", false);
@@ -467,59 +463,31 @@ request.setCharacterEncoding("UTF-8");
 						if(tpCd == '20'){
 							
 							alert("견본품 입니다. 다시 골라 주세요.");
-							$("#prd_cd"+seq).val("");
-							$("#prd_nm"+seq).val("");
-							$("#ivco_qty"+seq).val("");
-							$("#sal_qty"+seq).val("");
-							$("#csmr_upr"+seq).val("");
-							$("#sal_amt"+seq).val("");
-							$("#vos_amt"+seq).val("");
-							$("#vat_amt"+seq).val("");
+							choGiHwa(seq);
 							
 						}
 						
 						//소비자가가 0일 때
-						if(csmr == '0'){
+						if(tpCd != '20' && csmr == '0'){
 							alert("소비자가가 0 입니다. 다시 골라 주세요.");
-							$("#prd_cd"+seq).val("");
-							$("#prd_nm"+seq).val("");
-							$("#ivco_qty"+seq).val("");
-							$("#sal_qty"+seq).val("");
-							$("#csmr_upr"+seq).val("");
-							$("#sal_amt"+seq).val("");
-							$("#vos_amt"+seq).val("");
-							$("#vat_amt"+seq).val("");
+							choGiHwa(seq);
 							
 						}
 						
 						//해지 상품 일때
 						if(ssCd == 'C'){
 							alert("해지 상품입니다. 다시 골라 주세요.");
-							$("#prd_cd"+seq).val("");
-							$("#prd_nm"+seq).val("");
-							$("#ivco_qty"+seq).val("");
-							$("#sal_qty"+seq).val("");
-							$("#csmr_upr"+seq).val("");
-							$("#sal_amt"+seq).val("");
-							$("#vos_amt"+seq).val("");
-							$("#vat_amt"+seq).val("");
+							choGiHwa(seq);
 							
 						}
 						
 						//상품 재고가 0 일때
 						if(ivco == '0'){
 							alert("상품 재고가 없습니다. 다시 골라 주세요.");
-							$("#prd_cd"+seq).val("");
-							$("#prd_nm"+seq).val("");
-							$("#ivco_qty"+seq).val("");
-							$("#sal_qty"+seq).val("");
-							$("#csmr_upr"+seq).val("");
-							$("#sal_amt"+seq).val("");
-							$("#vos_amt"+seq).val("");
-							$("#vat_amt"+seq).val("");
+							choGiHwa(seq);
 							
 						}
-						
+
 						
 					}
 					else {
@@ -533,6 +501,8 @@ request.setCharacterEncoding("UTF-8");
 				}
 			}); // end of $.ajax
 		}
+		
+		
 		
 		//console.log('findJego enterkey event before');
 		//상품 코드 다 지웠을때 다시 계산 용
@@ -548,6 +518,9 @@ request.setCharacterEncoding("UTF-8");
 			if(prd_nm != '') {
 				
 				if(confirm("상품을 변경 하시겠습니까 ?")){
+					$("#sal_qty"+seq).attr("readonly", true);
+					$("#prd_cd"+seq).removeAttr("maxlength");
+					$("#prd_cd"+seq).removeAttr("oninput");
 					$("#prd_cd"+seq).val('');
 					$("#prd_nm"+seq).val('');
 					$("#ivco_qty"+seq).val('');
@@ -558,54 +531,7 @@ request.setCharacterEncoding("UTF-8");
 					$("#vos_amt"+seq).val('');
 					$("#vat_amt"+seq).val('');
 		 			
-		 			var totQty = 0;
-		 			$("input.sal_qty").each(function() {
-		 	 			console.log("$(this).val() : " + $(this).val());
-		 	 			var salQty = $(this).val();
-		 	 			if(salQty == ''){
-		 	 				salQty = '0';
-		 	 			}
-		 	 			totQty += parseInt(salQty);
-		 	 		});
-		 			console.log("totQty : " + totQty);
-		 			
-		 			var totAmt = 0;
-		 			$("input.sal_amt").each(function() {
-		 	 			console.log("$(this).val() : " + $(this).val());
-		 	 			var salAmt = removeComma($(this).val());
-		 	 			if(salAmt == ''){
-		 	 				salAmt = '0';
-		 	 			}
-		 	 			totAmt += parseInt(salAmt);
-		 	 		});
-		 			console.log("totAmt : " + totAmt);
-		 			
-		 			var totVos = 0;
-		 			$("input.vos_amt").each(function() {
-		 	 			console.log("$(this).val() : " + $(this).val());
-		 	 			var vosAmt = $(this).val();
-		 	 			if(vosAmt == ''){
-		 	 				vosAmt = '0';
-		 	 			}
-		 	 			totVos += parseInt(vosAmt);
-		 	 		});
-		 			console.log("totVos : " + totVos);
-		 			
-		 			var totVat = 0;
-		 			$("input.vat_amt").each(function() {
-		 	 			console.log("$(this).val() : " + $(this).val());
-		 	 			var vatAmt = $(this).val();
-		 	 			if(vatAmt == ''){
-		 	 				vatAmt = '0';
-		 	 			}
-		 	 			totVat += parseInt(vatAmt);
-		 	 		});
-		 			console.log("totVat : " + totVat);
-		 			
-		 			$("#tot_sal_qty").val(totQty);
-		 			$("#tot_sal_amt").val(addComma(totAmt+''));
-		 			$("#tot_vos_amt").val(totVos);
-		 			$("#tot_vat_amt").val(totVat);
+					gyeSan();
 					
 				}else {
 					
@@ -621,9 +547,113 @@ request.setCharacterEncoding("UTF-8");
 			
 			
  			}
-		//}
+		
     	
     } // end of  findjego()
+    
+    
+    
+    function choGiHwa(seq){
+		
+		$("#prd_cd"+seq).val("");
+		$("#prd_nm"+seq).val("");
+		$("#ivcOri"+seq).val("");
+		$("#ivco_qty"+seq).val("");
+		$("#sal_qty"+seq).val("");
+		$("#csmr_upr"+seq).val("");
+		$("#sal_amt"+seq).val("");
+		$("#vos_amt"+seq).val("");
+		$("#vat_amt"+seq).val("");
+		$("#prd_cd"+seq).removeAttr("maxlength");
+		$("#prd_cd"+seq).removeAttr("oninput");
+		$("#sal_qty"+seq).attr("readonly", true);
+		
+		gyeSan();
+    	
+    }
+    
+    
+    
+    function gyeSan(){
+    			
+    		// 총 판매 수량 
+			var totQty = 0;
+			//모든 행들에 쓰여 있는 판매 수량 값을 구하기 위해 
+			$("input.sal_qty").each(function() {
+	 			console.log("$(this).val() : " + $(this).val());
+	 			var salQty = removeComma($(this).val());
+	 			//판매 수량이 비어있다면 0 으로 만들어준다
+	 			if(salQty == ''){
+	 				salQty = '0';
+	 			}
+	 			//총 판매수량은 모든 판매수량을 변환하여 더한 값들
+	 			totQty += parseInt(salQty);
+	 		});
+			console.log("totQty : " + totQty);
+			
+			//총 판매 금액
+			var totAmt = 0;
+			//모든 행들에 쓰여 있는 판매 금액을 구하기 위해 
+			$("input.sal_amt").each(function() {
+	 			console.log("$(this).val() : " + $(this).val());
+	 			//콤마를 제거한 판매 금액 
+	 			var salAmt = removeComma($(this).val());
+	 			//판매 금액이 비어있다면 0으로 만들어준다
+	 			if(salAmt == ''){
+	 				salAmt = '0';
+	 			}
+	 			//총 판매 금액은 모든 판매 금액들은 변환하여 더한 값들
+	 			totAmt += parseInt(salAmt);
+	 		});
+			console.log("totAmt : " + totAmt);
+			
+			//총 판매 공급 가액 = 소비자 판매가 - (소비자 판매가 * 10%)
+			var totVos = 0;
+			$("input.vos_amt").each(function() {
+	 			console.log("$(this).val() : " + $(this).val());
+	 			var vosAmt = $(this).val();
+	 		    //공급가 금액이 비어있다면 0으로 만들어준다
+	 			if(vosAmt == ''){
+	 				vosAmt = '0';
+	 			}
+	 		    //총 공급가액은 모든 판매 금액들의 소비자 판매가 - (소비자 판매가 * 10%) 변환하여 더한 값들
+	 			totVos += parseInt(vosAmt);
+	 		});
+			console.log("totVos : " + totVos);
+			
+			//총 판매 부가세액 = 소비자 판매가 * 10%
+			var totVat = 0;
+			$("input.vat_amt").each(function() {
+	 			console.log("$(this).val() : " + $(this).val());
+	 			var vatAmt = $(this).val();
+	 		   //부가세 금액이 비어있다면 0으로 만들어준다
+	 			if(vatAmt == ''){
+	 				vatAmt = '0';
+	 			}
+	 		//총 판매 부가세액은 모든 판매 금액들의 소비자 판매가 * 10% 변환하여 더한 값들
+	 			totVat += parseInt(vatAmt);
+	 		});
+			console.log("totVat : " + totVat);
+			
+			//값들을 저장한다
+			$("#tot_sal_qty").val(addComma(totQty));
+			$("#tot_sal_amt").val(addComma(totAmt));
+			$("#tot_vos_amt").val(totVos);
+			$("#tot_vat_amt").val(totVat);
+    	
+    	
+    	
+    }
+    
+    
+    //ajax로 물건을 가져온 후 값이 더 입력 되지 않게 막기
+    function inputCheck(obj){	
+	
+    	//console.log("얍 " + obj.value);
+		obj.value = obj.value.replace(/[^0-9]/g,'').replace(/(\..*)\./g, '$1');
+
+    }
+  
     
     
     // List 중에 동일 상품 있는지 확인
@@ -706,6 +736,13 @@ request.setCharacterEncoding("UTF-8");
 			$('#cust_no').focus();
 			return false;
 		 } 
+		
+		 if(check_cust == '해지고객') {
+				alert('해지 상태인 고객은 불러 올 수 없습니다.');
+				$('#cust_no').val('');
+				$('#cust_no').focus();
+				return false;
+			 } 
 		 
 		
 		$.ajax({
@@ -722,11 +759,31 @@ request.setCharacterEncoding("UTF-8");
 					var custNo = json[0].CUST_NO; // => 매장값 꺼냄
 					var custNm = json[0].CUST_NM; // => 매장명 꺼냄
 					var avbPnt = json[0].AVB_PNT;
+					var custSSCD = json[0].CUST_SS_CD;
 					
 					$('#cust_no_dis').val(custNo);
 					$('#cust_no').val(custNm);
 					$('#avb_pnt').val(avbPnt);
 					$("#custNmHide").val(custNm);
+					
+					console.log('custSSCD'+custSSCD);
+					if(custSSCD == '해지'){
+						
+						alert("해지 고객은 불러올 수 없습니다.");
+						$('#cust_no_dis').val('');
+						$('#cust_no').val('');
+						$('#avb_pnt').val('');
+						$("#custNmHide").val('');
+					}
+					
+					if(custSSCD == '중지'){
+						
+						alert("중지 고객은 불러올 수 없습니다.");
+						$('#cust_no_dis').val('');
+						$('#cust_no').val('');
+						$('#avb_pnt').val('');
+						$("#custNmHide").val('');
+					}
 					
 				} else {
 					alert('일치하는 값이 없거나 두개 이상입니다');
@@ -799,54 +856,7 @@ request.setCharacterEncoding("UTF-8");
  		});
  		
  		//계산용
- 		var totQty = 0;
-		$("input.sal_qty").each(function() {
- 			console.log("$(this).val() : " + $(this).val());
- 			var salQty = $(this).val();
- 			if(salQty == ''){
- 				salQty = '0';
- 			}
- 			totQty += parseInt(salQty);
- 		});
-		console.log("totQty : " + totQty);
-		
-		var totAmt = 0;
-		$("input.sal_amt").each(function() {
- 			console.log("$(this).val() : " + $(this).val());
- 			var salAmt = removeComma($(this).val());
- 			if(salAmt == ''){
- 				salAmt = '0';
- 			}
- 			totAmt += parseInt(salAmt);
- 		});
-		console.log("totAmt : " + totAmt);
-		
-		var totVos = 0;
-		$("input.vos_amt").each(function() {
- 			console.log("$(this).val() : " + $(this).val());
- 			var vosAmt = $(this).val();
- 			if(vosAmt == ''){
- 				vosAmt = '0';
- 			}
- 			totVos += parseInt(vosAmt);
- 		});
-		console.log("totVos : " + totVos);
-		
-		var totVat = 0;
-		$("input.vat_amt").each(function() {
- 			console.log("$(this).val() : " + $(this).val());
- 			var vatAmt = $(this).val();
- 			if(vatAmt == ''){
- 				vatAmt = '0';
- 			}
- 			totVat += parseInt(vatAmt);
- 		});
-		console.log("totVat : " + totVat);
-		
-		$("#tot_sal_qty").val(totQty);
-		$("#tot_sal_amt").val(addComma(totAmt+''));
-		$("#tot_vos_amt").val(totVos);
-		$("#tot_vat_amt").val(totVat);
+ 		gyeSan();
 
 	}
 	
@@ -869,54 +879,7 @@ request.setCharacterEncoding("UTF-8");
 				$("#su_tbl2 >tbody tr:last").remove();
 				
 				//다시 계산
-				var totQty = 0;
-				$("input.sal_qty").each(function() {
-		 			console.log("$(this).val() : " + $(this).val());
-		 			var salQty = $(this).val();
-		 			if(salQty == ''){
-		 				salQty = '0';
-		 			}
-		 			totQty += parseInt(salQty);
-		 		});
-				console.log("totQty : " + totQty);
-				
-				var totAmt = 0;
-				$("input.sal_amt").each(function() {
-		 			console.log("$(this).val() : " + $(this).val());
-		 			var salAmt = removeComma($(this).val());
-		 			if(salAmt == ''){
-		 				salAmt = '0';
-		 			}
-		 			totAmt += parseInt(salAmt);
-		 		});
-				console.log("totAmt : " + totAmt);
-				
-				var totVos = 0;
-				$("input.vos_amt").each(function() {
-		 			console.log("$(this).val() : " + $(this).val());
-		 			var vosAmt = $(this).val();
-		 			if(vosAmt == ''){
-		 				vosAmt = '0';
-		 			}
-		 			totVos += parseInt(vosAmt);
-		 		});
-				console.log("totVos : " + totVos);
-				
-				var totVat = 0;
-				$("input.vat_amt").each(function() {
-		 			console.log("$(this).val() : " + $(this).val());
-		 			var vatAmt = $(this).val();
-		 			if(vatAmt == ''){
-		 				vatAmt = '0';
-		 			}
-		 			totVat += parseInt(vatAmt);
-		 		});
-				console.log("totVat : " + totVat);
-				
-				$("#tot_sal_qty").val(totQty);
-	 			$("#tot_sal_amt").val(addComma(totAmt+''));
-	 			$("#tot_vos_amt").val(totVos);
-	 			$("#tot_vat_amt").val(totVat);
+				gyeSan();
 			}
 		}
 		
@@ -986,14 +949,14 @@ request.setCharacterEncoding("UTF-8");
 	            // 입력한 월이 12월 보다 큰 경우
 	            if(inputMonth > 12) {
 	                alert("12월보다 큰 월수는 입력하실 수 없습니다. ");
-	                period.value = "12/" + inputYear;
+	                period.value = '';
 	                return false;
 	            }
 
 	            // 입력한 유효기간을 현재날짜와 비교하여 사용 가능 여부를 판단한다.
 	            if((inputYear + inputMonth) <= (nowYear + nowMonth)) {
 	                alert("유효기간이 만료된 카드는 사용하실 수 없습니다.");
-	                period.value = inputMonth + "/" + (Number(nowYear) + 1);
+	                period.value = '';
 	                return false;
 	            }
 	            period.value = inputMonth + "/" + inputYear;
@@ -1139,7 +1102,7 @@ request.setCharacterEncoding("UTF-8");
 	    	//tot_sal_qty 비어있으면 저장 안되게 
 	    	var totSalQty = $('#tot_sal_qty').val();
 	    	if(totSalQty == '') {
-	    		alert('판매 등록 할 상품이 없습니다. 등록 확인 해주세요.');
+	    		alert('판매 등록 할 상품이 없습니다. 물품 등록 후 확인 해주세요.');
 	    		$('#prd_cd').focus();
 	    		return true;
 	    	}
@@ -1236,7 +1199,7 @@ request.setCharacterEncoding("UTF-8");
     			return true;
 	    	}
 	    	if((csh_stlm_amt+crd_stlm_amt+pnt_stlm_amt) != tot_sal_amt) {
-	    		alert('결제금액과 판매금액이 일치하지 않습니다. 다시 확인 해주시기 바랍니다.');
+	    		alert('결제금액과 판매금액이 일치하지 않습니다. \n다시 확인 해주시기 바랍니다.');
     			return true;
 	    	}
 	    	
@@ -1326,6 +1289,13 @@ request.setCharacterEncoding("UTF-8");
 		}
 		
 		
+		 //대시 제거
+		function removeDash(obj){
+			var result = obj.replace(/-/gi, "");
+	        return result;
+		}
+		
+		
 		//팝팝
 		
 		function popUp_jego4(item){
@@ -1351,6 +1321,15 @@ request.setCharacterEncoding("UTF-8");
 			window.open(url, title, status);
 			
 		}
+		
+		
+		function logOutPopUp(){
+			
+			opener.logOut();
+			
+			
+		}
+		
 
 </script>
 </head>
@@ -1460,7 +1439,7 @@ request.setCharacterEncoding("UTF-8");
 	
 	<div id="btn_div" style="margin-left:455px; margin-top:50px;">
 		<input style="width:80px; height:40px;" type="button" id="cancel" value="닫기" >
-		<input style="width:80px; height:40px;" type="button" id="submit" value="저장" onclick="saveSal()">	
+		<input style="width:80px; height:40px;" type="button" id="submit" value="저장" >	
 	</div>
 	
 	<input type="hidden" name="se_prt_cd" id="se_prt_cd" value="${sessionScope.member.prt_cd}" />

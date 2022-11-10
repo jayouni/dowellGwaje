@@ -88,6 +88,11 @@
 			}
 			
 			
+			//부모 창 닫을시 팝업창 닫기
+	 	    $(opener).one('beforeunload', function() {                    
+				window.close();                                      
+			});
+			
 			//큰 돋보기 눌렀을 떄 함수 실행 
 			$("#mainSearch").click(function(){
 				mainTable();

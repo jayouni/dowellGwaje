@@ -39,6 +39,11 @@ request.setCharacterEncoding("UTF-8");
 				window.close();
 			});
 			
+			//부모 창 닫을시 팝업창 닫기
+	 	    $(opener).one('beforeunload', function() {                    
+				window.close();                                      
+			});
+			
 			//적용 버튼 누를때
 			$("#submit").click(function(){
 				

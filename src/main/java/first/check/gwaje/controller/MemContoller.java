@@ -318,9 +318,11 @@ public class MemContoller {
 		if (mainList != null && mainList.size() > 0) {
 
 			for (Map<String, String> mainMap : mainList) {
+				System.out.println("c체크 mainMap"+mainMap);
 
 				JSONObject jsonObj = new JSONObject();
 				try {
+					jsonObj.put("PRT_CD", mainMap.get("PRT_CD"));
 					jsonObj.put("SAL_DT", mainMap.get("SAL_DT"));
 					jsonObj.put("CUST_NO", mainMap.get("CUST_NO"));
 					jsonObj.put("CUST_NM", mainMap.get("CUST_NM"));
@@ -338,8 +340,9 @@ public class MemContoller {
 					jsonObj.put("FST_USER_ID", mainMap.get("FST_USER_ID"));
 					jsonObj.put("FST_USER_NM", mainMap.get("FST_USER_NM"));
 					jsonObj.put("FST_REG_DT", mainMap.get("FST_REG_DT"));
-					jsonObj.put("RTN_USE_YN", mainMap.get("RTN_USE_YN"));
+					jsonObj.put("RTN_USE_YN", mainMap.get("RTN_USE_YN") == null ? "" : mainMap.get("RTN_USE_YN"));
 					jsonObj.put("SAL_TP_CD", mainMap.get("SAL_TP_CD"));
+					
 				} catch (JSONException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -349,6 +352,7 @@ public class MemContoller {
 
 			}
 		}
+		System.out.println("c체크 jsonArr"+jsonArr.toString());
 		return jsonArr.toString();
 	}
 	
@@ -404,6 +408,8 @@ public class MemContoller {
 					rst = memService.newSalDt(salDtMap);
 					System.out.println("salDt rst : " + rst);
 					if(rst.equals("1")) {
+						salDtMap.put("sal_qty", "-" + String.valueOf(salDtMap.get("sal_qty")));
+						System.out.println("ivcoMt salDtMap : " + salDtMap);
 						//판매등록 재고처리
 						rst = memService.updIvcoMt(salDtMap);
 						System.out.println("ivcoMt rst : " + rst);
@@ -470,8 +476,21 @@ public class MemContoller {
 	//판매 상세 3번 팝업  mav 
 	@RequestMapping(value = "/sale/sangsePopup", method = RequestMethod.POST)
 	public ModelAndView sangsePop3(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
+		
+		HttpSession session = request.getSession();
 		ModelAndView mav = new ModelAndView();
+		
+		MemberVO memberVO = (MemberVO) session.getAttribute("member");
+		
+		String se_user_dt_cd = memberVO.getUser_dt_cd();
+		String prt_cd  = memberVO.getPrt_cd();
+		String prt_cd_nm = memberVO.getPrt_nm();
+
+		
+		session.setAttribute("prt_cd_nm", prt_cd_nm);
+		session.setAttribute("prt_cd", prt_cd);
+		session.setAttribute("se_user_dt_cd", se_user_dt_cd);
+		
 		Map<String, Object> map = new HashMap<String, Object>();
 		
 		map.put("PRT_CD", request.getParameter("PRT_CD"));
@@ -493,6 +512,7 @@ public class MemContoller {
 		map.put("FST_USER_ID", request.getParameter("FST_USER_ID"));
 		map.put("FST_REG_DT", request.getParameter("FST_REG_DT"));
 		map.put("RTN_USE_YN", request.getParameter("RTN_USE_YN"));
+		map.put("SAL_TP_CD", request.getParameter("SAL_TP_CD"));
 		
 		
 		System.out.println(map);
@@ -909,6 +929,7 @@ public class MemContoller {
 						jsonObj.put("CUST_NM", custMap.get("CUST_NM"));
 						jsonObj.put("MBL_NO", custMap.get("MBL_NO"));
 						jsonObj.put("CUST_SS_CD", custMap.get("CUST_SS_CD"));
+						jsonObj.put("DTL_CD", custMap.get("DTL_CD"));
 						jsonObj.put("AVB_PNT", custMap.get("AVB_PNT"));
 					} catch (JSONException e) {
 						// TODO Auto-generated catch block

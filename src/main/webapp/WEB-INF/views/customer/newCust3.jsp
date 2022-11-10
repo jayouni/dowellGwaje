@@ -62,6 +62,11 @@ request.setCharacterEncoding("UTF-8");
 			
 			window.close();
 		});
+		
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
 
 		
 		//생일 키인 시 유효성 

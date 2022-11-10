@@ -19,6 +19,7 @@ request.setCharacterEncoding("UTF-8");
 		var se_prt_cd = "";
 		var se_prt_nm = "";
 		var se_prt_dt_cd = "";
+		var arrayWindow = Array();
 				
 		//날짜 계산
 		//일주일 전 
@@ -246,6 +247,12 @@ request.setCharacterEncoding("UTF-8");
 			}); // end change sal from 날짜 유효성 검사
 			
 			
+	 	      
+			//부모 창 닫을시 팝업창 닫기
+	 	    $(opener).one('beforeunload', function() {                    
+				window.close();                                      
+			});
+			
 		}); //document ready end
 		
 		
@@ -274,8 +281,6 @@ request.setCharacterEncoding("UTF-8");
 			}
 			
 			
-
-			
 		}
 		
 		
@@ -288,8 +293,8 @@ request.setCharacterEncoding("UTF-8");
 			var prt_cd_nm = $("#prt_cd_nm").val();
 			var cust_no_dis = $("#cust_no_dis").val();
 			var cust_no = $("#cust_no").val();
-			var sal_from = $("#sal_from").val();
-			var sal_to = $("#sal_to").val();
+			var sal_from = $("#sal_from").val().replace(/-/gi, "");
+			var sal_to = $("#sal_to").val().replace(/-/gi, "");
 			
 			
 			
@@ -299,12 +304,11 @@ request.setCharacterEncoding("UTF-8");
 				return false;
 			}
 			 
-			if(prt_cd == '' ){
+/* 			if(prt_cd == '' ){
 				alert('매장 입력은 필수 입니다.');
 				$("#prt_cd_nm").focus();
 				return false;
-			}
-			 
+			}	 */		 
 
 	 		
 		$.ajax({
@@ -342,7 +346,9 @@ request.setCharacterEncoding("UTF-8");
 						console.log("vat : "+ a);
 						console.log("vos : "+ b);
 						
-						item.PRT_CD = prtCd;
+						console.log("매장을 찾아줘ㅠㅠ : "+ item.PRT_CD);
+						
+						//item.PRT_CD = prtCd;
 						item.PRT_NM = prtNm;
 						
 						if(item.SAL_TP_CD == 'SAL'){
@@ -356,23 +362,23 @@ request.setCharacterEncoding("UTF-8");
 						
 						if(item.SAL_TP_CD == 'RTN') {
 							rtnFontStyle = "style='color: red;'";
-							totSalQty -= parseInt(item.TOT_SAL_QTY);
-							totSalAmt -= parseInt(item.TOT_SAL_AMT);
-							cshStlmAmt -= parseInt(item.CSH_STLM_AMT);
-							crdStlmAmt -= parseInt(item.CRD_STLM_AMT);
-							pntStlmAmt -= parseInt(item.PNT_STLM_AMT);
+							totSalQty += parseInt(item.TOT_SAL_QTY);
+							totSalAmt += parseInt(item.TOT_SAL_AMT);
+							cshStlmAmt += parseInt(item.CSH_STLM_AMT);
+							crdStlmAmt += parseInt(item.CRD_STLM_AMT);
+							pntStlmAmt += parseInt(item.PNT_STLM_AMT);
 						}
 						
 						html += "<tr style='width: 100%;'>";
-						html += "<td class='center' id='SAL_DT'>"+item.SAL_DT+"</td>";
+						html += "<td class='center' id='SAL_DT'>"+changeDateString(item.SAL_DT)+"</td>";
 						html += "<td class='center' id='CUST_NO'>"+item.CUST_NO+"</td>";
 						html += "<td class='center' id='CUST_NM'>"+item.CUST_NM+"</td>";
 						html += "<td class='center' id='SAL_NO'>"+item.SAL_NO+"&nbsp;<button id='sangBtn' onclick='sangse("+JSON.stringify(item)+")'>상세</button></td>";
-						html += "<td class='right' id='TOT_SAL_QTY' " + rtnFontStyle + ">"+item.TOT_SAL_QTY+"</td>";
-						html += "<td class='right' id='TOT_SAL_AMT' " + rtnFontStyle + ">"+addComma(item.TOT_SAL_AMT)+"</td>";
-						html += "<td class='right' id='CSH_STLM_AMT'>"+addComma(item.CSH_STLM_AMT)+"</td>";
-						html += "<td class='right' id='CRD_STLM_AMT'>"+addComma(item.CRD_STLM_AMT)+"</td>";
-						html += "<td class='right' id='PNT_STLM_AMT'>"+addComma(item.PNT_STLM_AMT)+"</td>";
+						html += "<td class='right' id='TOT_SAL_QTY' " + rtnFontStyle + ">"+removeDash(addComma(item.TOT_SAL_QTY))+"</td>";
+						html += "<td class='right' id='TOT_SAL_AMT' " + rtnFontStyle + ">"+removeDash(addComma(item.TOT_SAL_AMT))+"</td>";
+						html += "<td class='right' id='CSH_STLM_AMT'>"+removeDash(addComma(item.CSH_STLM_AMT))+"</td>";
+						html += "<td class='right' id='CRD_STLM_AMT'>"+removeDash(addComma(item.CRD_STLM_AMT))+"</td>";
+						html += "<td class='right' id='PNT_STLM_AMT'>"+removeDash(addComma(item.PNT_STLM_AMT))+"</td>";
 						html += "<td class='center' id='FST_USER_NM'>"+item.FST_USER_NM+"</td>";
 						html += "<td class='center' id='FST_REG_DT'>"+item.FST_REG_DT+"</td>";
 						html += "</tr>";
@@ -384,11 +390,11 @@ request.setCharacterEncoding("UTF-8");
 					
 					hap += "<tr style='width: 100%;'>";
 					hap += "<td colspan='4' style='background-color: #8ae6ff;'>합계</td>";
-					hap += "<td class='right' id='totSalQty' style='border-right:1px solid #00c8ff;'>"+addComma(totSalQty)+"</td>";
-					hap += "<td class='right' id='TOT_SAL_AMT' style='border-right:1px solid #00c8ff;'>"+addComma(totSalAmt)+"</td>";
-					hap += "<td class='right' id='CSH_STLM_AMT' style='border-right:1px solid #00c8ff;'>"+addComma(cshStlmAmt)+"</td>";
-					hap += "<td class='right' id='CRD_STLM_AMT' style='border-right:1px solid #00c8ff;'>"+addComma(crdStlmAmt)+"</td>";
-					hap += "<td class='right' id='PNT_STLM_AMT' >"+addComma(pntStlmAmt)+"</td>";
+					hap += "<td class='right' id='totSalQty' style='border-right:1px solid #00c8ff;'>"+removeDash(addComma(totSalQty))+"</td>";
+					hap += "<td class='right' id='TOT_SAL_AMT' style='border-right:1px solid #00c8ff;'>"+removeDash(addComma(totSalAmt))+"</td>";
+					hap += "<td class='right' id='CSH_STLM_AMT' style='border-right:1px solid #00c8ff;'>"+removeDash(addComma(cshStlmAmt))+"</td>";
+					hap += "<td class='right' id='CRD_STLM_AMT' style='border-right:1px solid #00c8ff;'>"+removeDash(addComma(crdStlmAmt))+"</td>";
+					hap += "<td class='right' id='PNT_STLM_AMT' >"+removeDash(addComma(pntStlmAmt))+"</td>";
 					hap += "<td colspan='2' style='background-color: #8ae6ff;'></td>";
 					hap += "</tr>";
 				}
@@ -463,14 +469,22 @@ request.setCharacterEncoding("UTF-8");
 	
 	
 	function sangse(item){
-		//console.log('sangse 실행?');
-		//console.log(JSON.stringify(item));
+		console.log('sangse 실행?');
+		console.log(JSON.stringify(item));
 		//console.log(item.PRT_CD + " : " + item.PRT_NM);
 		popUp_sangse3(item);
 			
 			
 	}
 	
+		
+		
+	function changeDateString(date){
+	    var year = date.substr(0,4);
+	    var month = date.substr(4,2);
+	    var day = date.substr(6,2);
+	    return year + "-" + month + "-" + day
+	}
 		
 	
 
@@ -578,19 +592,20 @@ request.setCharacterEncoding("UTF-8");
 			  salDtPop.CUST_NM.value = item.CUST_NM;
 			  salDtPop.SAL_DT.value = item.SAL_DT;
 			  salDtPop.SAL_NO.value = item.SAL_NO;
-			  salDtPop.TOT_SAL_QTY.value = item.TOT_SAL_QTY;
-			  salDtPop.TOT_SAL_AMT.value = addComma(item.TOT_SAL_AMT);
+			  salDtPop.TOT_SAL_QTY.value = removeDash(addComma(item.TOT_SAL_QTY));
+			  salDtPop.TOT_SAL_AMT.value = removeDash(addComma(item.TOT_SAL_AMT));
 			  salDtPop.TOT_VOS_AMT.value = item.TOT_VOS_AMT;
 			  salDtPop.TOT_VAT_AMT.value = item.TOT_VAT_AMT;
-			  salDtPop.CSH_STLM_AMT.value = addComma(item.CSH_STLM_AMT);
-			  salDtPop.CRD_STLM_AMT.value = addComma(item.CRD_STLM_AMT);
-			  salDtPop.PNT_STLM_AMT.value = addComma(item.PNT_STLM_AMT);
+			  salDtPop.CSH_STLM_AMT.value = removeDash(addComma(item.CSH_STLM_AMT));
+			  salDtPop.CRD_STLM_AMT.value = removeDash(addComma(item.CRD_STLM_AMT));
+			  salDtPop.PNT_STLM_AMT.value = removeDash(addComma(item.PNT_STLM_AMT));
 			  salDtPop.CRD_NO.value = item.CRD_NO;
 			  salDtPop.VLD_YM.value = item.VLD_YM;
 			  salDtPop.CRD_CO_CD.value = item.CRD_CO_CD;
 			  salDtPop.FST_USER_ID.value = item.FST_USER_ID;
 			  salDtPop.FST_REG_DT.value = item.FST_REG_DT;
 			  salDtPop.RTN_USE_YN.value = item.RTN_USE_YN;
+			  salDtPop.SAL_TP_CD.value = item.SAL_TP_CD;
 			  salDtPop.submit();  
 			  
 		} 
@@ -636,7 +651,25 @@ request.setCharacterEncoding("UTF-8");
 				}    
 			    return result;
 			}
-
+		
+		
+		 
+		 
+		 //대시 제거
+			function removeDash(obj){
+				var result = obj.replace(/-/gi, "");
+		        return result;
+			}
+		 
+		 
+		 //로그아웃 시 팝업 창 닫기
+		 function logOut(){
+			 
+			 for(i=0;i<arrayWindow.length;i++){
+				 arrayWindow[i].close();
+			 }
+			 
+		 }
 
 
 </script>
@@ -682,7 +715,7 @@ request.setCharacterEncoding("UTF-8");
 		
 
 
-	<div id="mainTable" style="overflow:auto; width:70%; height:300px; margin-top:20px; margin-left:170px; clear:both;" >
+	<div id="mainTable" style="overflow:auto;white-space: nowrap; width:70%; height:300px; margin-top:20px; margin-left:170px; clear:both;" >
 	<table border="1" id="first_table" >
 		<thead id="main_table">
 		<tr id="first_tbl_tr">
@@ -707,35 +740,21 @@ request.setCharacterEncoding("UTF-8");
 		<!-- <tfoot id="main_foot"/> -->
 	</table>
 	</div>
-<!-- 	<div style="margin-left:170px;width:70%">
-		<table style="border: 2px solid #00c8ff; width:1046px ;text-align:center;">
-			<tr id="hapgye">
-				<td class="center border_left" style="width:417px; border-right:1px solid #00c8ff;">합계</td>
-				<td class="right" id="totSalQty" style="width:48px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" id="totSalAmt" style="width:97px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" id="cshStlmAmt" style="width:94px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" id="crdStlmAmt" style="width:97px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" id="pntStlmAmt" style="width:69px; border-right:1px solid #00c8ff;"></td>
-				<td class="right" style="width:69px; border-right:1px solid #00c8ff;"></td>
-				<td class="right"></td>
-			</tr>
-		</table>
-	</div> -->
+
 	
-	
-	<div id="hapTable" style="overflow:auto; width:100%; margin-left:170px; clear:both;" >
+	<div id="hapTable" style="overflow:auto; width:70%; margin-left:170px; clear:both;" >
 	<table border="0" id="hap_table" >
 		<thead id="hap_table" style='width: 100%;'>
 		<tr id="hap_tbl_tr">
  			<th class='center' style="width:100px; background-color: #8ae6ff;"></th>
 			<th class='center' style="width:120px; background-color: #8ae6ff;"></th>
 			<th class='center' style="width:87px; background-color: #8ae6ff;"></th>
-			<th class='center' style="width:106px; background-color: #8ae6ff;"></th>
+			<th class='center' style="width:105px; background-color: #8ae6ff;"></th>
 			<th class='center' style="width:50px;"></th>
-			<th class='center' style="width:96px;"></th>
-			<th class='center' style="width:95px;"></th>
 			<th class='center' style="width:97px;"></th>
-			<th class='center' style="width:70px;"></th>
+			<th class='center' style="width:97px;"></th>
+			<th class='center' style="width:96px;"></th>
+			<th class='center' style="width:67px;"></th>
 			<th class='center' colspan='2' style="background-color: #8ae6ff; width:200px;"></th>
 			
 		</tr>
@@ -766,6 +785,7 @@ request.setCharacterEncoding("UTF-8");
 		<input type="hidden" name="FST_USER_ID">
 		<input type="hidden" name="FST_REG_DT">
 		<input type="hidden" name="RTN_USE_YN">
+		<input type="hidden" name="SAL_TP_CD">
 	</form>
 </body>
 </html>

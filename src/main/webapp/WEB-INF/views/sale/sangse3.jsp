@@ -15,8 +15,24 @@ request.setCharacterEncoding("UTF-8");
 <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
 <script>
 		
+	var se_prt_dt_cd = "";
+	let html = "";	
+	
 	$(document).ready(function() {
 	
+		
+		var se_user_dt_cd = $("#se_user_dt_cd").val(); 
+		
+		//console.log("333session" + se_user_dt_cd);
+		
+		
+		
+		//본사 로그인 일때
+		if(se_user_dt_cd == 1 ) {
+
+			$("#banpumBtn").attr('disabled', true);
+			
+		}
 		
 		//창 열리자마자 리스트 나오게
 		 findSangse();
@@ -34,6 +50,12 @@ request.setCharacterEncoding("UTF-8");
 			banPum();
 		});
 		
+		
+	      
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
 		
 	}); //document ready end
 
@@ -95,7 +117,7 @@ request.setCharacterEncoding("UTF-8");
 						html += "<input type='hidden' name='prd_cd"+index+"' class='prd_cd' value='"+item.PRD_CD+"' />";
 						html += "<td class='center'>"+item.PRD_NM+"</td>";
 						html += "<input type='hidden' name='prd_nm"+index+"' class='prd_nm' value='"+item.PRD_NM+"' />";
-						html += "<td class='right' >"+item.SAL_QTY+"</td>";
+						html += "<td class='right' >"+addComma(item.SAL_QTY)+"</td>";
 						html += "<input type='hidden' name='sal_qty"+index+"' class='sal_qty' value='"+item.SAL_QTY+"' />";
 						html += "<td class='right' >"+addComma(item.SAL_VOS_AMT)+"</td>";
 						html += "<input type='hidden' name='vos_amt"+index+"' class='vos_amt' value='"+item.SAL_VOS_AMT+"' />";
@@ -109,7 +131,7 @@ request.setCharacterEncoding("UTF-8");
 					});
 					html += "<tr >";
 					html += "<td colspan='3' class='right border_left'>합계</td>";
-					html += "<td class='right' >"+salQty+"</td>";
+					html += "<td class='right' >"+addComma(salQty)+"</td>";
 					html += "<input type='hidden' id='tot_sal_qty' value='"+salQty+"' />";
 					html += "<td class='right' >"+addComma(salVosAmt)+"</td>";
 					html += "<input type='hidden' id='tot_vos_amt' value='"+salVosAmt+"' />";
@@ -275,7 +297,13 @@ request.setCharacterEncoding("UTF-8");
 		var result = obj.toString().replace(/,/gi, "");
         return result;
 	}
-
+	
+	
+	 //대시 제거
+	function removeDash(obj){
+		var result = obj.replace(/-/gi, "");
+        return result;
+	}
 
 
 
@@ -312,10 +340,10 @@ request.setCharacterEncoding("UTF-8");
 	</table>
 	</form>
 	</div>
-	
+	<input type="hidden" name="se_user_dt_cd" id="se_user_dt_cd" value="${sessionScope.member.user_dt_cd}" />
 	
 	<div id="banBtn_div" style="margin-right:415px; margin-top:60px;">
-		<button type="button" id="banpumBtn" <c:if test="${item.RTN_USE_YN eq 'N'}">disabled="disabled"</c:if>>반품</button>
+		<button type="button" id="banpumBtn" <c:if test="${item.SAL_TP_CD eq 'RTN' || item.SAL_TP_CD eq 'SAL' && item.RTN_USE_YN eq 'N'}">disabled="disabled"</c:if>>반품</button>
 		<button type="button" id="closeBtn" >닫기</button>
 	</div>
 	

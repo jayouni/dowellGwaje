@@ -43,6 +43,11 @@ request.setCharacterEncoding("UTF-8");
 			window.close();
 		});
 		
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
+		
 		//적용 버튼 눌렀을 때
 		$("#submit").click(function(){
 			
@@ -153,12 +158,15 @@ request.setCharacterEncoding("UTF-8");
 					if(json.length > 0){
 						$.each(json,function(index, item){
 							
+							//console.log(json);
+
+							
 							html += "<tr style='width: 100%;'>";  
-							html += "<td class='center border_left' ondblclick='dbl_cust()'><input type='checkbox' name='checkbox' id='"+item.CUST_NO+"' onclick='checkOne(this)'/></td>";
-							html += "<td class='center' ondblclick='dbl_cust()' id='CUST_NO'>"+item.CUST_NO+"</td>";
-							html += "<td class='center' ondblclick='dbl_cust()' id='CUST_NM'>"+item.CUST_NM+"</td>";
-							html += "<td class='center' ondblclick='dbl_cust()' id='MBL_NO'>"+item.MBL_NO+"</td>";
-							html += "<td class='center' ondblclick='dbl_cust()' id='CUST_SS_CD'>"+item.CUST_SS_CD+"</td>";
+							html += "<td class='center border_left' ondblclick='dbl_cust()'><input type='checkbox' name='checkbox' id='"+item.CUST_NO+"' onclick='checkOne(this)' /></td>";
+							html += "<td class='center' ondblclick='dbl_cust()' id='CUST_NO' >"+item.CUST_NO+"</td>";
+							html += "<td class='center' ondblclick='dbl_cust()' id='CUST_NM' >"+item.CUST_NM+"</td>";
+							html += "<td class='center' ondblclick='dbl_cust()' id='MBL_NO' >"+item.MBL_NO+"</td>";
+							html += "<td class='center' ondblclick='dbl_cust()' id='CUST_SS_CD' >"+item.CUST_SS_CD+"</td>";
 							html += "<input type='hidden' id='avb_pnt' value='" + item.AVB_PNT + "'/>";
 							html += "</tr>";
 							
@@ -203,13 +211,17 @@ request.setCharacterEncoding("UTF-8");
 			var custNo = td.eq(1).text();												
 		    var custNm = td.eq(2).text();
 		    var avbPnt = td.eq(5).val();
+
 	
 			$("#cust_no_dis", opener.document).val(custNo); 								
 		    $("#cust_no", opener.document).val(custNm);
 		    $("#avb_pnt", opener.document).val(avbPnt);
 		    $("#custNmHide", opener.document).val(custNm);
+		 	window.close();
+		 	
+
+		    
 			
-			window.close();
 	
 		}
 	

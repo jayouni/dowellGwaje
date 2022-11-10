@@ -14,6 +14,7 @@ request.setCharacterEncoding("UTF-8");
 <title>매장재고조회</title>
 <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
 <script>
+
 		var prt_nm = "";
 		var se_prt_cd = "";
 		var se_prt_nm = "";
@@ -92,7 +93,10 @@ request.setCharacterEncoding("UTF-8");
 			$("#ivcOri"+seq, opener.document).val(ivcoQty);
 			$("#sal_qty"+seq, opener.document).val(qty); 
 		    $("#csmr_upr"+seq, opener.document).val(csmrUpr);
-		    $("#sal_amt"+seq, opener.document).val(price); 	
+		    $("#sal_amt"+seq, opener.document).val(price); 
+		    $("#chkPrdCd", opener.document).val(prdCd);
+		    $("#prd_cd"+seq, opener.document).attr("maxlength","9");
+		    $("#prd_cd"+seq, opener.document).attr("oninput","inputCheck(this)");
 		    
 		    //값이 있을때만 sal_qty input 창이 열리게 하기 위해
 			var chkNm = $("#prd_nm"+seq).val(prdNm);
@@ -101,7 +105,7 @@ request.setCharacterEncoding("UTF-8");
 				$("#sal_qty"+seq, opener.document).attr("readonly", false);
 			}
 	    	
-	    	
+			opener.gyeSan();
 	    	ChangClose();
 			
 			
@@ -140,6 +144,11 @@ request.setCharacterEncoding("UTF-8");
 			popUp_prt();
 		});
 		
+ 	      
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
 		
 	}); //document ready end
 
@@ -174,7 +183,7 @@ request.setCharacterEncoding("UTF-8");
 				let info = "";														
 				let html = "";	
 			 	
-				//console.log(json);												
+				console.log(json);												
 				if(json.length > 0) { 
 					
 					$.each(json, function(index, item){	
@@ -202,7 +211,7 @@ request.setCharacterEncoding("UTF-8");
 						html += "<td class='center border_left' ondblclick='dbl_prd()'><input type='checkbox' name='checkbox' id='"+item.PRD_CD+"' onclick='checkOne(this)' "+haedis+"/></td>";
 						html += "<td class='center ' ondblclick='dbl_prd()' id='PRD_CD' "+haeji+">"+item.PRD_CD+"</td>";
 						html += "<td class='center' ondblclick='dbl_prd()' id='PRD_NM' "+haeji+">"+item.PRD_NM+"</td>";
-						html += "<td class='right' ondblclick='dbl_prd()' id='IVCO_QTY' "+haeji+">"+item.IVCO_QTY+"</td>";
+						html += "<td class='right' ondblclick='dbl_prd()' id='IVCO_QTY' "+haeji+">"+addComma(item.IVCO_QTY)+"</td>";
 						html += "<td class='right' ondblclick='dbl_prd()' id='PRD_CSMR_UPR' "+haeji+">"+addComma(item.PRD_CSMR_UPR)+"</td>";
 						html += "<input type='hidden' id='PRD_SS_CD' value='" + item.PRD_SS_CD + "' />";
 						html += "</tr>";
@@ -329,7 +338,9 @@ request.setCharacterEncoding("UTF-8");
 			$("#sal_qty"+seq, opener.document).val(qty); 
 		    $("#csmr_upr"+seq, opener.document).val(csmrUpr);
 		    $("#sal_amt"+seq, opener.document).val(price); 
-			
+		    $("#chkPrdCd", opener.document).val(prdCd);
+		    $("#prd_cd"+seq, opener.document).attr("maxlength","9");
+		    $("#prd_cd"+seq, opener.document).attr("oninput","inputCheck(this)");
 		    
 		    //값이 있을때만 sal_qty input 창이 열리게 하기 위해		    
 			var chkNm = $("#prd_nm"+seq).val(prdNm);
@@ -339,7 +350,7 @@ request.setCharacterEncoding("UTF-8");
 			}
 		    
 
-		    
+		    opener.gyeSan();
 			window.close();
 		}
 
@@ -379,8 +390,8 @@ request.setCharacterEncoding("UTF-8");
 		<tr>
 			<td style="padding-bottom:10px;">매장
 			<input type="text" name="prt_cd" id="prt_cd"  style="margin-left:25px;"disabled>
-			<button type="button" id="btn_prt" ><img src="../resources/image/dott.png" id="search_shop"></button>
-			<input type="text" name="prt_cd_nm" id="prt_cd_nm" style="margin-left:3px;"></td>
+			<button type="button" id="btn_prt" disabled><img src="../resources/image/dott.png" id="search_shop" ></button>
+			<input type="text" name="prt_cd_nm" id="prt_cd_nm" style="margin-left:3px;" disabled></td>
 			<td rowspan="2" style="float: right;padding-right: 8px;"><button type="button" id="search"><img src="../resources/image/dott.png" id="sub_btn4"></button></td>
 		</tr>
 		<tr>

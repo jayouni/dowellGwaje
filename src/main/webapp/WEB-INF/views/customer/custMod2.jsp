@@ -41,6 +41,11 @@ request.setCharacterEncoding("UTF-8");
 		ssCd();
 		
 		
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
+		
 		//본사로 들어왔을떄
 		if(se_user_dt_cd == 1) {									
 			

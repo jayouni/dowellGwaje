@@ -392,38 +392,35 @@
 		             , ((NVL(RSVG_PNT, 0)+NVL(HNDC_PNT, 0))-NVL(US_PNT, 0)) AVB_PNT		/*가용포인트 = 적립 포인트 + 수기포인트 - 사용포인트 */
 		             , NVL(HNDC_PNT, 0) HNDC_PNT										/*수기 포인트*/
 		        FROM (
-		                SELECT CUST_NO 													/*고객 번호*/
-		                		<!--CS_CUST_PNT_D에 PNT_DS_CD 가 100(적립) 일때 PNT_DS_DT_CD가 101(구매 적립) 이면 PNT 양수로  -->
-		                		<!--CS_CUST_PNT_D에 PNT_DS_CD 가 100(적립) 일때 PNT_DS_DT_CD가 104(구매 적립 취소) 이면 PNT 음수로  -->
-		                     , SUM(CASE WHEN PNT_DS_CD = '100' THEN CASE WHEN PNT_DS_DT_CD IN ('101') THEN PNT
-		                                                                 WHEN PNT_DS_DT_CD IN ('104') THEN PNT*-1
-		                                                            END
-		                                ELSE 0											/*해당 되지 않는 것은 0으로*/
-		                           END) RSVG_PNT										/*적립 포인트*/
-		                        <!--CS_CUST_PNT_D에 PNT_DS_CD 가 200(사용) 일때 PNT_DS_DT_CD가 201(구매 사용) 이면 PNT 음수로   -->
-		                        <!--CS_CUST_PNT_D에 PNT_DS_CD 가 200(사용) 일때 PNT_DS_DT_CD가 202(구매 사용 취소) 이면 PNT 양수로   -->										
-		                     , SUM(CASE WHEN PNT_DS_CD = '200' THEN CASE WHEN PNT_DS_DT_CD IN ('201') THEN PNT*-1 
-		                                                                 WHEN PNT_DS_DT_CD IN ('202') THEN PNT
-		                                                            END
-		                                ELSE 0											/*해당 되지 않는 것은 0으로*/
-		                           END) US_PNT											/*사용 포인트*/
-		                     <!--CS_CUST_PNT_D에 PNT_DS_DT_CD에 102(회원 가입 포인트) , 103(이벤트 적립) 이면 수기 포인트  -->    
-		                     , SUM(CASE WHEN PNT_DS_DT_CD IN ('102','103') THEN PNT ELSE 0 END) HNDC_PNT
-		                 FROM CS_CUST_PNT_D												/*회원 포인트 이력*/
-		                WHERE 1=1
-		                 AND ST_DT   = TO_CHAR(SYSDATE, 'YYYYMMDD')						/*기준 일자*/
-		                 AND CUST_NO = #{cust_no}										/*고객 번호*/
-		                 AND PNT_SEQ = #{pnt_seq}										/*신규 가입시 생성된 시퀀스 사용*/
-		                GROUP BY CUST_NO												/*고객 번호로 그룹화*/
-		            )
-		      ) D																		/*D로 지정*/
-		ON (M.CUST_NO = D.CUST_NO)														/*CS_CUST_PNT_M 테이블에 고객번호와 포인트 고객번호가 같은곳*/
+						<!-- 공통 코드 테이블에서 포인트에 레퍼런스 할 수 있는 컬럼을 추가 하여 그에 맞는 포인트 이름과 음수 양수 처리를 할 수 있게 적용 처리 -->
+						<!-- CS_CUST_PNT_D 포인트 구분 상세 코드와 MA_CODE_DT 세부코드가 같을 때 PNT 값과 그에 맞는 -1 or 1 을 곱해 음수 양수 처리 -->
+                        SELECT D.CUST_NO                                                /*고객 번호*/
+                             , (CASE WHEN C.REF1_FILD = 'RSVG_PNT' AND D.PNT_DS_DT_CD = C.DTL_CD THEN D.PNT*TO_NUMBER(C.REF2_FILD)
+                                     ELSE 0                      						/*해당 되지 않는 것은 0으로*/
+                                END) RSVG_PNT                                        	/*적립 포인트*/
+                             , (CASE WHEN C.REF1_FILD = 'US_PNT' AND D.PNT_DS_DT_CD = C.DTL_CD THEN D.PNT*TO_NUMBER(C.REF2_FILD)                                
+                                     ELSE 0                                            /*해당 되지 않는 것은 0으로*/
+                                END) US_PNT                                            /*사용 포인트*/
+                             , (CASE WHEN C.REF1_FILD = 'HNDC_PNT' AND D.PNT_DS_DT_CD = C.DTL_CD THEN D.PNT*TO_NUMBER(C.REF2_FILD)
+                                     ELSE 0 
+                             	END) HNDC_PNT											/*수기 포인트*/
+                         FROM CS_CUST_PNT_D D                                           /*회원 포인트 이력 테이블*/
+                         LEFT OUTER JOIN MA_CODE_DT C									/*코드 상세 테이블*/
+                         ON D.PNT_DS_DT_CD = C.DTL_CD 									/*D의 포인트 구분 상세코드와 C의 세부 코드가 같은곳*/
+                         AND C.CODE_CD = 'PNT_DS_DT_CD'									/*그리고 C의 공통코드가 PNT_DS_DT_CD 인 곳*/
+                        WHERE 1=1
+                         AND D.ST_DT   = TO_CHAR(SYSDATE, 'YYYYMMDD')                   /*기준 일자*/
+                         AND D.CUST_NO = #{cust_no}                                     /*고객 번호*/
+                         AND D.PNT_SEQ = #{pnt_seq}                                     /*신규 가입시 생성된 시퀀스 사용*/
+                    )
+		      ) A																		/*A로 지정*/
+		ON (M.CUST_NO = A.CUST_NO)														/*CS_CUST_PNT_M 테이블에 고객번호와 포인트 고객번호가 같은곳*/
 		WHEN MATCHED THEN																/*값이 있다면*/
-		UPDATE SET M.TOT_PNT    = (M.TOT_PNT+D.TOT_PNT)									/*원래 있던 총 포인트 + D에서 만들어진 총 포인트*/
-		          ,M.RSVG_PNT   = (M.RSVG_PNT+D.RSVG_PNT)								/*원래 있던 적립 포인트+ D에서 만들어진 적립 포인트*/
-		          ,M.US_PNT     = (M.US_PNT+D.US_PNT)									/*원래 있던 사용 포인트+ D에서 만들어진 사용 포인트*/
-		          ,M.AVB_PNT    = (M.AVB_PNT+D.AVB_PNT)									/*원래 있던 가용 포인트+ D에서 만들어진 가용 포인트*/
-		          ,M.HNDC_PNT   = (M.HNDC_PNT+D.HNDC_PNT)								/*원래 있던 수기 포인트+ D에서 만들어진 수기 포인트*/		
+		UPDATE SET M.TOT_PNT    = (M.TOT_PNT+A.TOT_PNT)									/*원래 있던 총 포인트 + A에서 만들어진 총 포인트*/
+		          ,M.RSVG_PNT   = (M.RSVG_PNT+A.RSVG_PNT)								/*원래 있던 적립 포인트+ A에서 만들어진 적립 포인트*/
+		          ,M.US_PNT     = (M.US_PNT+A.US_PNT)									/*원래 있던 사용 포인트+ A에서 만들어진 사용 포인트*/
+		          ,M.AVB_PNT    = (M.AVB_PNT+A.AVB_PNT)									/*원래 있던 가용 포인트+ A에서 만들어진 가용 포인트*/
+		          ,M.HNDC_PNT   = (M.HNDC_PNT+A.HNDC_PNT)								/*원래 있던 수기 포인트+ A에서 만들어진 수기 포인트*/		
 		          ,M.LST_UPD_DT = SYSDATE												/*최종 수정 일자*/							
 		          ,M.LST_UPD_ID = #{user_id}											/*최종 수정자*/
 		WHEN NOT MATCHED THEN															/*값이 없다면*/
@@ -437,12 +434,12 @@
 		      , M.FST_USER_ID															/*최초 등록자*/
 		      , M.LST_UPD_DT															/*최종 수정 일자*/
 		      , M.LST_UPD_ID) 															/*최종 수정자*/
-		VALUES (D.CUST_NO																/*고객 번호*/
-		      , D.TOT_PNT																/*총 포인트*/
-		      , D.RSVG_PNT																/*적립 포인트*/
-		      , D.US_PNT																/*사용 포인트*/
-		      , D.AVB_PNT																/*가용 포인트*/
-		      , D.HNDC_PNT																/*수기 포인트*/
+		VALUES (A.CUST_NO																/*고객 번호*/
+		      , A.TOT_PNT																/*총 포인트*/
+		      , A.RSVG_PNT																/*적립 포인트*/
+		      , A.US_PNT																/*사용 포인트*/
+		      , A.AVB_PNT																/*가용 포인트*/
+		      , A.HNDC_PNT																/*수기 포인트*/
 		      , SYSDATE																	/*지금 날짜*/
 		      , #{user_id}																/*최초 등록자*/
 		      , SYSDATE																	/*지금 날짜*/
@@ -463,6 +460,7 @@
 	<result property="CUST_NM" 		column="CUST_NM" 		javaType="String" />
 	<result property="MBL_NO" 		column="MBL_NO" 		javaType="String" />
 	<result property="CUST_SS_CD" 	column="CUST_SS_CD" 	javaType="String" />
+	<result property="DTL_CD" 		column="DTL_CD" 		javaType="String" />
 	<result property="AVB_PNT" 	    column="AVB_PNT" 	    javaType="String" />
 	</resultMap>
     <select id="fourtable" resultMap="searchCust" parameterType="HashMap">
@@ -768,6 +766,7 @@
 	<!-- 1번 판매 조회 리스트 -->
 	
 	  <resultMap type="HashMap" id="panmeMain">
+	   <result property="PRT_CD" 		column="PRT_CD" 		javaType="String" />
    	   <result property="SAL_DT" 		column="SAL_DT" 		javaType="String" />
    	   <result property="CUST_NO" 		column="CUST_NO" 		javaType="String" />
    	   <result property="CUST_NM" 		column="CUST_NM" 		javaType="String" />
@@ -784,42 +783,25 @@
 	   <result property="CRD_CO_CD" 	column="CRD_CO_CD" 		javaType="String" />
 	   <result property="FST_USER_ID" 	column="FST_USER_ID" 	javaType="String" />
 	   <result property="FST_REG_DT" 	column="FST_REG_DT" 	javaType="String" />
+	   <result property="SAL_TP_CD" 	column="SAL_TP_CD" 		javaType="String" />
+	   <result property="RTN_USE_YN" 	column="RTN_USE_YN" 	javaType="String" />
 	</resultMap>
 	
 	  <select id="panMainTable" resultMap="panmeMain" parameterType="HashMap">
-	  		/*상품 상태 반품인지 아닌지 알기 위해 작성*/
-			WITH RTN AS (
-					SELECT SAL.PRT_CD																	/*매장 코드*/
-					     , SAL.SAL_DT																	/*판매 일자*/
-					     , SAL.SAL_NO																	/*판매 번호*/
-					     , CASE WHEN SAL.SAL_TP_CD = 'RTN' THEN 'N'										/*상품 코드 상태가 RTN 이면 N*/
-					            WHEN SAL.SAL_TP_CD = 'SAL' AND (RTN.ORG_SHOP_CD IS NOT NULL				/*상품 코드 상태가 SAL 인데 원매장 코드가 있고*/
-					                                       AND RTN.ORG_SAL_DT IS NOT NULL				/*원판매 일자가 있고*/
-					                                       AND RTN.ORG_SAL_NO IS NOT NULL) THEN 'N'		/*원판매번호가 있다면 N*/
-					            ELSE 'Y'																/*나머지는 Y*/
-					        END AS RTN_USE_YN															/*3pg에서 버튼 비활성화를 위해 만듦*/
-					 FROM CS_SAL01_MT SAL																/*고객판매 테이블*/
-					LEFT OUTER JOIN CS_SAL01_MT RTN														
-					 ON SAL.PRT_CD = RTN.ORG_SHOP_CD													/*매장코드와 원매장코드*/
-					 AND SAL.SAL_DT = RTN.ORG_SAL_DT													/*판매일자와 원판매일자*/
-					 AND SAL.SAL_NO = RTN.ORG_SAL_NO													/*판매번호와 원판매번호가 같은 곳*/
-					WHERE 1=1
-					 AND SAL.SAL_DT BETWEEN TO_DATE(#{sal_from}, 'YYYY-MM-DD')							/*지정한 판매일자 사이*/
-			         AND TO_DATE(#{sal_to}, 'YYYY-MM-DD')
-			 		 AND SAL.PRT_CD = #{prt_cd}											
-			)
+
     	
-		    SELECT SAL.SAL_DT																			/*판매 일자*/
+		    SELECT SAL.PRT_CD
+		         , SAL.SAL_DT																			/*판매 일자*/
 			     , SAL.CUST_NO																			/*고객 번호*/
 			     , CUST.CUST_NM																			/*고객 명*/
 			     , SAL.SAL_NO																			/*판매 번호*/
-			     , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_QTY ELSE DAL.SAL_QTY*-1 END)) TOT_SAL_QTY			/*총 판매수량*/
-			     , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_AMT ELSE DAL.SAL_AMT*-1 END)) TOT_SAL_AMT			/*총 판매금액*/
-			     , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_VOS_AMT ELSE DAL.SAL_VOS_AMT*-1 END)) TOT_VOS_AMT	/*총 공급가액*/
-                 , ABS(SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_VAT_AMT ELSE DAL.SAL_VAT_AMT*-1 END)) TOT_VAT_AMT	/*총 부가세액*/
-			     , ABS(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.CSH_STLM_AMT ELSE SAL.CSH_STLM_AMT*-1 END) CSH_STLM_AMT		/*현금결제금액*/
-			     , ABS(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.CRD_STLM_AMT ELSE SAL.CRD_STLM_AMT*-1 END) CRD_STLM_AMT		/*카드결제금액*/
-			     , ABS(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.PNT_STLM_AMT ELSE SAL.PNT_STLM_AMT*-1 END) PNT_STLM_AMT		/*포인트결제금액*/
+			     , SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_QTY ELSE DAL.SAL_QTY*-1 END) TOT_SAL_QTY			/*총 판매수량*/
+			     , SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_AMT ELSE DAL.SAL_AMT*-1 END) TOT_SAL_AMT			/*총 판매금액*/
+			     , SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_VOS_AMT ELSE DAL.SAL_VOS_AMT*-1 END) TOT_VOS_AMT	/*총 공급가액*/
+                 , SUM(CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN DAL.SAL_VAT_AMT ELSE DAL.SAL_VAT_AMT*-1 END) TOT_VAT_AMT	/*총 부가세액*/
+			     , CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.CSH_STLM_AMT ELSE SAL.CSH_STLM_AMT*-1 END CSH_STLM_AMT		/*현금결제금액*/
+			     , CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.CRD_STLM_AMT ELSE SAL.CRD_STLM_AMT*-1 END CRD_STLM_AMT		/*카드결제금액*/
+			     , CASE WHEN SAL.SAL_TP_CD = 'SAL' THEN SAL.PNT_STLM_AMT ELSE SAL.PNT_STLM_AMT*-1 END PNT_STLM_AMT		/*포인트결제금액*/
 			     , SAL.CRD_NO																			/*카드번호*/
                  , SAL.VLD_YM																			/*유효년월*/
                  , SAL.CRD_CO_CD																		/*카드회사*/
@@ -827,11 +809,13 @@
 			     , USMT.USER_NM AS FST_USER_NM															/*등록자 명*/
 			     , TO_CHAR(SAL.FST_REG_DT, 'YYYY-MM-DD') AS FST_REG_DT									/*최초등록일자*/
 			     , SAL.SAL_TP_CD																		/*상품상태코드*/
-			     , (SELECT RTN_USE_YN 																	/*반품 버튼을 위한 서브쿼리*/
-			         FROM RTN 
-			        WHERE PRT_CD = #{prt_cd} 
-			          AND SAL_DT = SAL.SAL_DT 
-			          AND SAL_NO = SAL.SAL_NO) AS RTN_USE_YN
+                 , (SELECT CASE WHEN ORG_SHOP_CD IS NULL THEN 'Y'
+                                ELSE 'N'
+                           END
+                     FROM CS_SAL01_MT 
+                    WHERE ORG_SHOP_CD = SAL.PRT_CD
+                     AND  ORG_SAL_DT  = SAL.SAL_DT
+                     AND  ORG_SAL_NO  = SAL.SAL_NO) AS RTN_USE_YN
 			FROM CS_SAL01_MT SAL																		/*고객판매 테이블*/
 			INNER JOIN CS_SAL01_DT DAL																	/*고객판매 상세 테이블*/
             ON SAL.PRT_CD = DAL.PRT_CD																	/*매장 코드가 같은 곳*/
@@ -842,17 +826,21 @@
 			INNER JOIN MA_USER_MT USMT																	/*사용자 테이블*/
 			ON SAL.FST_USER_ID = USMT.USER_ID															/*사용자 id가 같은 곳*/
 			WHERE 1=1
-			AND SAL.SAL_DT BETWEEN TO_DATE(#{sal_from}, 'YYYY-MM-DD')									/*판매 일자*/
-			        AND TO_DATE(#{sal_to}, 'YYYY-MM-DD')
-			 AND SAL.PRT_CD = #{prt_cd}																	/*매장코드*/
+			AND SAL.SAL_DT BETWEEN #{sal_from} AND #{sal_to}											/*판매 일자*/
+			 																
 			 
+			 
+			<if test='prt_cd != "" '>
+			    AND SAL.PRT_CD = #{prt_cd}															    /*매장코드*/
+			</if>
 			 
 			<if test='cust_no_dis != "" '>
 			    AND CUST.CUST_NO = #{cust_no_dis}														/*고객 번호*/
 			</if>
 			
 			
-			GROUP BY SAL.SAL_DT																			/*판매 일자*/
+			GROUP BY SAL.PRT_CD
+				   , SAL.SAL_DT																			/*판매 일자*/
 			       , SAL.CUST_NO																		/*고객 번호*/
 			       , CUST.CUST_NM																		/*고객 명*/
 			       , SAL.SAL_NO																			/*판매 일자*/
@@ -982,9 +970,7 @@
 	 <update id="updIvcoMt" parameterType="HashMap">
 	 
 		UPDATE SD_IVCO01_MT																	/*매장현재고 테이블*/
-		SET IVCO_QTY = (CASE WHEN #{sal_tp_cd} = 'SAL' THEN (IVCO_QTY - #{sal_qty})			/*재고 수량 판매구분코드가 SAL이면 재고수량에 -*/
-		                     ELSE (IVCO_QTY + #{sal_qty})									/*판매구분코드가 RTN이면 재고수량에 +*/
-		                END)
+		SET IVCO_QTY = IVCO_QTY + #{sal_qty}												/*판매/반품 시 같은 쿼리 이용, 재고 넣고 빼고 함*/
 		  , LST_UPD_DT = SYSDATE															/*최종 수정 날짜*/
 		  , LST_UPD_ID = #{user_id}															/*최종 수정 아이디 로그인 들어온 아이디*/
 		WHERE 1=1
@@ -1060,7 +1046,7 @@
 				     , SD.IVCO_QTY						/*재고 수량*/
 				     , MA.PRD_TP_CD						/*상품 유형 코드*/
 				     , MA.PRD_SS_CD						/*상품 상태 코드*/
-				     ,TRIM(TO_CHAR(MA.PRD_CSMR_UPR, '999,999,999,999,999')) AS PRD_CSMR_UPR    /*소비자가*/
+				     , MA.PRD_CSMR_UPR    /*소비자가*/
 				     
 				FROM SD_IVCO01_MT SD					/*매장현재고 테이블*/
 				LEFT OUTER JOIN							

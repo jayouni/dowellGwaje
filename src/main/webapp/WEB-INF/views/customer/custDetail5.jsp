@@ -31,7 +31,12 @@ request.setCharacterEncoding("UTF-8");
 			$("#close55").click(function(){
 				window.close();
 			});
-	
+		
+			
+			//부모 창 닫을시 팝업창 닫기
+	 	    $(opener).one('beforeunload', function() {                    
+				window.close();                                      
+			});	
 			
 		}); //end of document
 	

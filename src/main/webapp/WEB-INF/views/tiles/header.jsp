@@ -25,7 +25,6 @@
 					<li><a href="/gwaje/member/toMain">고객조회</a></li>
 					<li><a href="/gwaje/search/toCustmod">고객정보조회</a></li>
 					<li><a href="/gwaje/search/getTotal">매장월별실적조회</a></li> 
-					<!-- <li><a id="maewol">매장월별실적조회</a></li> -->
 					<li><a href="/gwaje/sale/panMain">고객판매조회</a></li>
 					<li id="logout"><a href="/gwaje/member/logout">로그아웃</a></li>
 					<li>

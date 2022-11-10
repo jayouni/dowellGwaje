@@ -114,7 +114,11 @@ request.setCharacterEncoding("UTF-8");
 
  	        }
  	     });
-	
+		
+		//부모 창 닫을시 팝업창 닫기
+ 	    $(opener).one('beforeunload', function() {                    
+			window.close();                                      
+		});
 	
 	
 	}); //end  ready document
